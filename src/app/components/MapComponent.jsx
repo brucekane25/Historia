@@ -118,7 +118,12 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
     }
   }, [mode]); // Runs whenever mode changes
   
-
+  useEffect(() => {
+    
+    console.log("clusterRef OBJ:", clusterGroupRef.current);
+    
+  }, [clusterGroupRef.current])
+  
 
   useEffect(() => {
     const mapContainer = document.querySelector(".leaflet-container");
@@ -205,6 +210,7 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
 
       {/* MarkerClusterGroup */}
       <MarkerClusterGroup
+
         // key={country} // Force remount on country change
         ref={clusterGroupRef}
         disableClusteringAtZoom={9}
