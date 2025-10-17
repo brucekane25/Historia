@@ -1,6 +1,8 @@
 "use client";
 import "./globals.css"
 import { useState, useEffect } from "react";
+import Onboarding from "./components/Onboarding";
+import WhatsNew from "./components/WhatsNew";
 // import MapComponent from "./components/MapComponent";
 import apiClient from "./api/axios";
 import Navbart from "./components/Navbart";
@@ -30,7 +32,7 @@ import LeftDrawer from "./components/LeftDrawer";
 import SettingsPanel from "./components/SettingsPanel";
 import SettingsIcons from "./components/SettingsIcons";
 import dynamic from "next/dynamic";
-const MapComponent = dynamic(() => import("./components/MapComponent"),{ssr:false}
+const MapComponent = dynamic(() => import("./components/MapComponent"),{ssr:true}
 )
 export default function Home() {
   const [events, setEvents] = useState([]);
@@ -129,6 +131,8 @@ export default function Home() {
 
   return (
     <div className="">
+      <Onboarding />
+      <WhatsNew />
       {!isDesktop && mobileSlider && (
         <div className="fixed z-[999] bottom-[47vh] top-auto translate-y-1/2 right-2 flex flex-col items-center gap-2">
           <VerticalSlider

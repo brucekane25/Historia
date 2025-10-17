@@ -120,7 +120,7 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
   
   useEffect(() => {
     
-    console.log("clusterRef OBJ:", clusterGroupRef.current);
+    // console.log("clusterRef OBJ:", clusterGroupRef.current);
     
   }, [clusterGroupRef.current])
   

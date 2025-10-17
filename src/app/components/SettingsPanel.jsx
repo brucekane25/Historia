@@ -34,6 +34,12 @@ export default function SettingsPanel({
 
   const styles = ["Basic", "Miscellaneous", "Calendar", "Map"];
 
+  const handleClearFilters = () => {
+    setYearRange({ startYear: -3000, endYear: 2024 });
+    setSelectedCategory([]);
+    setcountry("");
+  };
+
   return (
     <div
       style={{
@@ -43,28 +49,40 @@ export default function SettingsPanel({
         color: mode ? themes.light.text : themes.dark.text,
       }}
       className={` 
-        ${isDesktop?'p-6':'py-2 px-3 min-w-[97vw] overflow-scroll'}
+        ${isDesktop ? "p-6" : "py-2 px-3 min-w-[97vw] overflow-scroll"}
         rounded-2xl  shadow-lg
          max-w-[550px]
         `}
     >
-      
       <header className="flex items-center justify-between mb-3">
-  <div className="flex items-center">
-    <span className="text-3xl"> &gt; </span>
-    <h2 className="ml-2 text-3xl font-semibold">Tweaks</h2>
-  </div>
-  
-  <div
-    onClick={()=>{setsettings(false)}}
-    className={`rounded-full p-2 shadow-md cursor-pointer transition-all duration-300  focus:outline-none ${
-      mode ? 'text-black bg-white hover:bg-gray-200' : 'text-white bg-gray-800 hover:bg-gray-700'
-    }`}
-  >
-    <Close className="w-5 h-5" />
-  </div>
-</header>
-
+        <div className="flex items-center">
+          <span className="text-3xl"> &gt; </span>
+          <h2 className="ml-2 text-3xl font-semibold">Tweaks</h2>
+        </div>
+        <div className="flex items-center">
+          <Button
+            onClick={handleClearFilters}
+            variant="outlined"
+            color={mode ? "success" : "error"}
+            size="small"
+            className="mr-2"
+          >
+            Clear Filters
+          </Button>
+          <div
+            onClick={() => {
+              setsettings(false);
+            }}
+            className={`rounded-full p-2 shadow-md cursor-pointer transition-all duration-300  focus:outline-none ${
+              mode
+                ? "text-black bg-white hover:bg-gray-200"
+                : "text-white bg-gray-800 hover:bg-gray-700"
+            }`}
+          >
+            <Close className="w-5 h-5" />
+          </div>
+        </div>
+      </header>
 
       <section>
         {/* <div className="grid grid-cols-4 gap-4 mb-6">
@@ -80,7 +98,7 @@ export default function SettingsPanel({
           ))}
         </div> */}
 
-        <div className={`${isDesktop?'space-y-4 mb-3':'space-y-2 mb-2' } `}>
+        <div className={`${isDesktop ? "space-y-4 mb-3" : "space-y-2 mb-2"} `}>
           {/* <div
             style={{
               backgroundColor: mode
@@ -89,8 +107,8 @@ export default function SettingsPanel({
             }}
             className="flex items-center justify-around p-2 h-16 rounded-lg"
           > */}
-            {/* <span className="text-sm font-medium">Country</span> */}
-            {/* <select
+          {/* <span className="text-sm font-medium">Country</span> */}
+          {/* <select
               style={{
                 backgroundColor: !mode ? themes.light.text : themes.dark.text,
               }}
@@ -119,11 +137,13 @@ export default function SettingsPanel({
               onCategoryChange={setSelectedCategory}
               clr={setSelectedEvent}
               mode={mode}
+              selectedCategories={selectedCategory}
+              setSelectedCategories={setSelectedCategory}
             />
           </div>
         </div>
 
-        <div className={`${isDesktop?'space-y-3':'space-y-2'} `}>
+        <div className={`${isDesktop ? "space-y-3" : "space-y-2"} `}>
           <div
             style={{
               backgroundColor: mode

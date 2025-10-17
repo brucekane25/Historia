@@ -17,7 +17,7 @@ import EcoIcon from "@mui/icons-material/Nature";
 import SearchIcon from "@mui/icons-material/Search";
 import CategoryIcon from "@mui/icons-material/Category";
 
-const CategoryDropdown = ({ onCategoryChange, clr, mode }) => {
+const CategoryDropdown = ({ onCategoryChange, clr, mode, selectedCategories, setSelectedCategories }) => {
   const categories = [
     { value: "selected", label: "Selected", icon: <SearchIcon /> },
     { value: "births", label: "Births", icon: <CakeIcon /> },
@@ -36,20 +36,17 @@ const CategoryDropdown = ({ onCategoryChange, clr, mode }) => {
     { value: "discoveries", label: "Discoveries", icon: <CategoryIcon /> },
   ];
 
-  const [selectedCategories, setSelectedCategories] = useState([]);
   useEffect(() => {
-    
-  onCategoryChange(selectedCategories);
-      clr(null);
-    
-  }, [selectedCategories,onCategoryChange,clr])
-  
+    onCategoryChange(selectedCategories);
+    clr(null);
+  }, [selectedCategories, onCategoryChange, clr]);
+
   const handleCategorySelect = (value) => {
     setSelectedCategories((prevCategories) => {
       const updatedCategories = prevCategories.includes(value)
         ? prevCategories.filter((category) => category !== value)
         : [...prevCategories, value];
-      
+
       return updatedCategories;
     });
   };
@@ -67,16 +64,9 @@ const CategoryDropdown = ({ onCategoryChange, clr, mode }) => {
               ? () => handleCategorySelect(category.value)
               : undefined
           }
-          color={selectedCategories.includes(category.value) ? mode?"success":'error' : "default"}
+          color={selectedCategories.includes(category.value) ? mode ? "success" : 'error' : "default"}
           variant="filled"
           style={{
-            // backgroundColor: selectedCategories.includes(category.value)
-            //   ? mode
-            //     ? "#90caf9" // Light blue for dark mode
-            //     : "#1976d2" // Default blue for light mode
-            //   : !mode
-            //   ? "#424242" // Grey for dark mode
-            //   : "#e0e0e0", // Light grey for light mode
             color: selectedCategories.includes(category.value) ? "white" : !mode ? "#fff" : "#000",
           }}
         />
