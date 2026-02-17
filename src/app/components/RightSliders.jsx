@@ -1,109 +1,113 @@
-"use client"
-import React, { useState } from 'react';
-import { themes } from '../themes/colorThemes';
-import { Button, Slider, Typography, Input } from '@mui/material';
+"use client";
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const RightSliders = ({ pages, mode, currentPage, setCurrentPage, setLimit, limit, filterTotalEvents, totalEvents }) => {
+const RightSliders = ({
+  pages,
+  mode,
+  currentPage,
+  setCurrentPage,
+  setLimit,
+  limit,
+  filterTotalEvents,
+  totalEvents,
+}) => {
+  const isDark = !mode;
   const [sliderValue, setSliderValue] = useState(limit);
 
-  // Handle live change (for Input & Slider)
-  const handleSliderChange = (e, newValue) => {
-    const value = typeof newValue === 'number' ? newValue : Number(e.target.value);
-    setSliderValue(value);
+  const handleSliderChange = (value) => {
+    setSliderValue(value[0]);
   };
 
-  // Commit value (when slider stops or input loses focus)
+  const handleInputChange = (e) => {
+    setSliderValue(e.target.value === "" ? "" : Number(e.target.value));
+  };
+
   const handleSliderChangeCommitted = () => {
     if (!Number.isNaN(sliderValue) && sliderValue >= 1 && sliderValue <= 10000) {
       setLimit(sliderValue);
     } else {
-      setSliderValue(limit); // Reset on invalid input
+      setSliderValue(limit);
     }
   };
 
   return (
-    <div className="Right-Sliders flex flex-col justify-center w-full items-center space-y-6 ">
-      <div className="flex flex-col items-center space-y-4 w-[90%]">
-
-        {/* Events Per Page with Input */}
-        <Typography sx={{color: mode ? themes.light.text : themes.dark.text}} variant="subtitle1" className=" pb-4 ">
-          Events Per Page:
+    <div className="space-y-4 w-full">
+      {/* Events Per Page */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className={`text-xs ${isDark ? "text-white/50" : "text-gray-500"}`}>
+            Events per page
+          </span>
           <Input
             value={sliderValue}
-            size="small"
-            sx={{
-              color: 'inherit',
-              paddingLeft: '20px',
-              '&:before': {
-                borderBottomColor: mode ? themes.light.text : themes.dark.text, // Default underline color
-              },
-              '&:after': {
-                borderBottomColor: 'purple', // Active (focused) underline color
-              },
-            }}
-            onChange={handleSliderChange} // Live change
-            onBlur={handleSliderChangeCommitted} // Commit on blur
-            onKeyDown={(e) => e.key === 'Enter' && handleSliderChangeCommitted()} // Commit on Enter
-            inputProps={{
-              step: 1,
-              min: 1,
-              max: 10000,
-              type: 'number',
-              'aria-labelledby': 'input-slider-start',
-            }}
+            onChange={handleInputChange}
+            onBlur={handleSliderChangeCommitted}
+            onKeyDown={(e) => e.key === "Enter" && handleSliderChangeCommitted()}
+            type="number"
+            min={1}
+            max={10000}
+            step={1}
+            className={`w-20 text-center text-sm font-mono rounded-lg border ${isDark
+                ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
+                : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
+              }`}
           />
-        </Typography>
-
-        {/* Slider Component */}
-        <Slider
-          value={sliderValue}
-          onChange={handleSliderChange} // Live change
-          onChangeCommitted={handleSliderChangeCommitted} // Commit on stop sliding
-          valueLabelDisplay="on"
-          min={1}
-          color={mode?'success':'error'}
-          max={10000}
-          aria-labelledby="events-per-page-slider"
-        />
-
-        {/* Pagination Buttons */}
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="contained"
-            style={{
-              backgroundColor: mode ? themes.light.background : themes.dark.background,
-              color: mode ? themes.light.text : themes.dark.text,
-            }}
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-            className="disabled:bg-gray-300 w-[100px] disabled:text-gray-500"
-          >
-            Previous
-          </Button>
-
-          <Typography sx={{color: mode ? themes.light.text : themes.dark.text}} variant="body1" className="text-gray-700">
-            Page {currentPage} of {pages}
-          </Typography>
-
-          <Button
-            variant="contained"
-            style={{
-              backgroundColor: mode ? themes.light.background : themes.dark.background,
-              color: mode ? themes.light.text : themes.dark.text,
-            }}
-            disabled={currentPage === pages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-            className="disabled:bg-gray-300 w-[100px] disabled:text-gray-500"
-          >
-            Next
-          </Button>
         </div>
+        <Slider
+          value={[sliderValue]}
+          onValueChange={handleSliderChange}
+          onValueCommit={handleSliderChangeCommitted}
+          min={1}
+          max={10000}
+          step={1}
+        />
+      </div>
 
-        {/* Total Events Info */}
-        <Typography sx={{color: mode ? themes.light.text : themes.dark.text}} className="text-3xl text-gray-600">
-          Total Events: {totalEvents}
-          , Filtered Events: {filterTotalEvents}
-        </Typography>
+      {/* Pagination */}
+      <div className="flex items-center justify-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+          className={`rounded-lg ${isDark
+              ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
+              : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
+            }`}
+        >
+          <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+          Prev
+        </Button>
+        <span className={`text-xs font-mono ${isDark ? "text-white/60" : "text-gray-500"}`}>
+          {currentPage}/{pages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={currentPage === pages}
+          onClick={() => setCurrentPage((p) => p + 1)}
+          className={`rounded-lg ${isDark
+              ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
+              : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
+            }`}
+        >
+          Next
+          <ChevronRight className="w-3.5 h-3.5 ml-1" />
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="flex items-center justify-between text-xs">
+        <span className={isDark ? "text-white/30" : "text-gray-400"}>
+          Total: <strong className={isDark ? "text-white/60" : "text-gray-600"}>{totalEvents?.toLocaleString()}</strong>
+        </span>
+        <span className={isDark ? "text-white/30" : "text-gray-400"}>
+          Showing: <strong className={isDark ? "text-purple-400" : "text-purple-600"}>{filterTotalEvents?.toLocaleString()}</strong>
+        </span>
       </div>
     </div>
   );

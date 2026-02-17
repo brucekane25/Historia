@@ -1,10 +1,12 @@
-"use client"
-import { Button, Drawer, IconButton, SwipeableDrawer } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import { useEffect, useState } from "react";
-import { themes } from "../themes/colorThemes";
-import { styled, Fab } from "@mui/material";
-import { Cancel, Casino, Handyman } from "@mui/icons-material";
+"use client";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Dice5, X } from "lucide-react";
 
 const Pane = ({
   isOpen,
@@ -15,124 +17,117 @@ const Pane = ({
   randomizeEvents,
   onEventClick,
 }) => {
-  const StyledFab = styled(Fab)({
-    margin: "0 auto",
-  });
+  const isDark = !mode;
 
   return (
-    <>
-      <Drawer
-        variant="persistent"
-        anchor="right"
-        open={isOpen}
-        sx={{
-          "& .MuiDrawer-paper": {
-            width: "30%",
-            backgroundColor: mode
-              ? themes.light.background
-              : themes.dark.background,
-            color: mode ? themes.light.text : themes.dark.text,
-            boxShadow: "0 0 30px rgba(0, 0, 0, 0.1)",
-          },
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetContent
+        side="right"
+        className="p-0 border-0"
+        style={{
+          width: "min(400px, 30vw)",
+          minWidth: "340px",
+          backgroundColor: isDark
+            ? "rgba(15,17,30,0.95)"
+            : "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(20px)",
+          color: isDark ? "#e5e7eb" : "#111827",
+          boxShadow: isDark
+            ? "0 0 40px rgba(99,102,241,0.05)"
+            : "0 0 40px rgba(0,0,0,0.08)",
         }}
       >
-        <div className="flex items-center mt-3 px-4 pb-3 justify-between">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <h2 className="text-lg font-semibold">Random Events</h2>
-          <div className="flex gap-1 justify-normal items-center">
-            <Button
+          <div className="flex gap-2 items-center">
+            <button
               onClick={randomizeEvents}
-              style={{
-                backgroundColor: mode
-                  ? themes.light.sbackground
-                  : themes.dark.sbackground,
-                color: mode ? themes.light.text : themes.dark.text,
-              }}
-              className="px-4 py-2 flex gap-1"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isDark
+                  ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
+                  : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                }`}
             >
-              <Casino/>
+              <Dice5 className="w-3.5 h-3.5" />
               Randomize
-            </Button>
-            <StyledFab
-
-              title="Close"
-              onClick={() => {
-                setIsOpen(false);
-              }}
-              sx={{
-                height:'20px',
-                width:'20px',
-                padding:'20px',
-                backgroundColor: mode ? themes.light.background : "gray",
-                ":hover": {
-                  backgroundColor: mode
-                    ? themes.light.sbackground
-                    : themes.dark.background,
-                },
-              }}
+            </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark
+                  ? "text-white/40 hover:text-white hover:bg-white/10"
+                  : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+                }`}
             >
-              <Cancel sx={{ color: !mode ? "white" : "black" }} />
-            </StyledFab>
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        <div className="p-4 overflow-y-auto">
-          <ul className="space-y-4">
+        <div className="px-4 pb-4 overflow-y-auto h-[calc(100%-64px)]">
+          <ul className="space-y-3">
             {randomEvents.map((event) => (
               <li
                 key={event._id}
-                className="p-3 bg-white rounded shadow hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => onEventClick(event)}
+                className="glass-card p-3 cursor-pointer"
                 style={{
-                  backgroundColor: mode
-                    ? themes.light.sbackground
-                    : themes.dark.sbackground,
-                  color: mode ? themes.light.text : themes.dark.text,
+                  background: isDark
+                    ? "rgba(255,255,255,0.04)"
+                    : "rgba(0,0,0,0.02)",
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.06)"
+                    : "rgba(0,0,0,0.05)",
                 }}
+                onClick={() => onEventClick(event)}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   {/* Thumbnail */}
                   <div
-                    className={`h-16 min-w-16 rounded-md ${
-                      event.thumbnail ? "overflow-hidden" : "bg-gray-300"
-                    }`}
+                    className={`h-14 w-14 rounded-lg flex-shrink-0 overflow-hidden ${!event.thumbnail
+                        ? isDark
+                          ? "bg-white/5"
+                          : "bg-gray-100"
+                        : ""
+                      }`}
                   >
-                    {event.thumbnail ? (
+                    {event.thumbnail && (
                       <img
                         src={event.thumbnail}
                         alt={event.title}
                         className="h-full w-full object-cover"
                       />
-                    ) : null}
+                    )}
                   </div>
 
-                  <div className="flex-grow ml-4">
-                    <h3 className="text-base font-medium line-clamp-2">
+                  <div className="flex-grow min-w-0">
+                    <h3
+                      className={`text-sm font-medium line-clamp-2 ${isDark ? "text-white" : "text-gray-900"
+                        }`}
+                    >
                       {event.title}
                     </h3>
-                    <p
-                      style={{
-                        backgroundColor: mode
-                          ? themes.light.background
-                          : themes.dark.background,
-
-                        color: mode ? "green" : "red",
-                      }}
-                      className="text-sm w-fit my-1 py-1 px-2 rounded-md text-gray-600"
-                    >
-                      {event.year}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-500 text-white text-sm px-2 py-1 rounded">
-                    {event.category}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className={`text-xs font-semibold ${isDark ? "text-purple-400" : "text-purple-600"
+                          }`}
+                      >
+                        {event.year}
+                      </span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full ${isDark
+                            ? "bg-white/10 text-white/60"
+                            : "bg-gray-100 text-gray-500"
+                          }`}
+                      >
+                        {event.category}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
         </div>
-      </Drawer>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 };
 

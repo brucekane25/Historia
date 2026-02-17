@@ -1,145 +1,230 @@
 "use client";
-import * as React from "react";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Menu from "@mui/material/Menu";
-import MenuIcon from "@mui/icons-material/Menu";
-import Container from "@mui/material/Container";
-import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
-import AdbIcon from "@mui/icons-material/Map";
-import GithubIcon from "@mui/icons-material/GitHub";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Globe, Map, Menu, Search, X, Github } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-function Navbart({
-  setisLeftOpen,
+const Navbart = ({
   setSelectedEvent,
-  setIsOpen,
-  setmode,
+  isLeftOpen,
+  setisLeftOpen,
   mode,
-  setcountry,
-}) {
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
+  setmode,
+  viewMode,
+  setViewMode,
+  events,
+}) => {
+  const isDark = !mode;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef(null);
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
+  // Client-side search
+  const searchResults = useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    const q = searchQuery.toLowerCase();
+    return (events || [])
+      .filter((e) => e.title?.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [searchQuery, events]);
 
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleResultClick = (event) => {
+    setSelectedEvent(event);
+    setSearchQuery("");
+    setShowResults(false);
   };
 
   return (
-    <Box
-      sx={{
-        position: "fixed",
-        top: 8,
-        left: "35%",
-        transform: "translateX(-50%)",
-        width: "90%",
-        maxWidth: 800,
-        borderRadius: 3,
-        boxShadow: 4,
-        overflow: "hidden",
-        zIndex: 1000,
-      }}
+    <motion.nav
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[95%] max-w-[900px]"
     >
-      <AppBar
-        position="static"
-        sx={{
-          borderRadius: 3,
-          background: "rgba(255,255 ,255 , 0.5)",
-          backdropFilter: "blur(10px)",
+      <div
+        className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-2xl ${isDark
+            ? "glass-dark shadow-purple-500/5"
+            : "glass shadow-black/10"
+          }`}
+        style={{
+          border: isDark
+            ? "1px solid rgba(255,255,255,0.06)"
+            : "1px solid rgba(0,0,0,0.06)",
         }}
       >
-        <Container maxWidth="xl">
-          <Toolbar disableGutters>
-            <AdbIcon sx={{ color:"black", mr: 1 }} />
-            <Typography
-              variant="h6"
-              noWrap
-              component="a"
-              href="/"
-              sx={{
-                mr: 2,
-                display: { xs: "none", md: "flex" },
-                fontWeight: 700,
-                letterSpacing: ".1rem",
-                color: "black",
-                textDecoration: "none",
+        {/* Logo */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div
+            className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark
+                ? "bg-purple-500/20 text-purple-300"
+                : "bg-purple-100 text-purple-600"
+              }`}
+          >
+            <Globe className="w-4 h-4" />
+          </div>
+          <span
+            className={`font-bold text-sm hidden sm:block ${isDark ? "text-white" : "text-gray-900"
+              }`}
+          >
+            Gloria
+          </span>
+          <span
+            className={`text-[9px] px-1.5 py-0.5 rounded-full hidden sm:block ${isDark
+                ? "bg-white/5 text-white/30"
+                : "bg-black/5 text-gray-400"
+              }`}
+          >
+            v2
+          </span>
+        </div>
+
+        {/* Search */}
+        <div className="flex-1 relative" ref={searchRef}>
+          <div className="relative">
+            <Search
+              className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${isDark ? "text-white/30" : "text-gray-400"
+                }`}
+            />
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowResults(true);
               }}
-            >
-              Historia
-            </Typography>
-
-            {/* Menu button for small screens */}
-            <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-              <IconButton
-                size="large"
-                aria-label="menu"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleOpenNavMenu}
-                
-              >
-                <MenuIcon  sx={{}}  color=""/>
-              </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorElNav}
-                anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "left",
+              onFocus={() => setShowResults(true)}
+              className={`w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border-0 outline-none transition-colors ${isDark
+                  ? "bg-white/5 text-white placeholder:text-white/25 focus:bg-white/10"
+                  : "bg-black/5 text-gray-900 placeholder:text-gray-400 focus:bg-black/8"
+                }`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setShowResults(false);
                 }}
-                keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "left",
-                }}
-                open={Boolean(anchorElNav)}
-                onClose={handleCloseNavMenu}
-                sx={{ display: { xs: "block", md: "none" } }}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 ${isDark ? "text-white/30 hover:text-white" : "text-gray-400 hover:text-gray-900"
+                  }`}
               >
-                <MenuItem onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">Dashboard</Typography>
-                </MenuItem>
-                <MenuItem onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">About</Typography>
-                </MenuItem>
-              </Menu>
-            </Box>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
 
-            {/* Desktop Menu */}
-            <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-              {/* <Button onClick={handleCloseNavMenu} sx={{ color: "black" }}>
-                Dashboard
-              </Button> */}
-              <Button onClick={handleCloseNavMenu} sx={{ color: "black" }}>
-                About
-              </Button>
-            </Box>
+          {/* Search Results Dropdown */}
+          <AnimatePresence>
+            {showResults && searchResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-full mt-2 left-0 right-0 rounded-xl shadow-2xl overflow-hidden z-50"
+                style={{
+                  background: isDark
+                    ? "rgba(15,17,30,0.97)"
+                    : "rgba(255,255,255,0.97)",
+                  backdropFilter: "blur(20px)",
+                  border: isDark
+                    ? "1px solid rgba(255,255,255,0.08)"
+                    : "1px solid rgba(0,0,0,0.06)",
+                }}
+              >
+                <div className="max-h-[300px] overflow-y-auto py-1">
+                  {searchResults.map((event) => (
+                    <button
+                      key={event._id}
+                      onClick={() => handleResultClick(event)}
+                      className={`w-full text-left px-3 py-2 flex items-center gap-2.5 transition-colors ${isDark
+                          ? "hover:bg-white/5"
+                          : "hover:bg-black/3"
+                        }`}
+                    >
+                      {event.thumbnail && (
+                        <img
+                          src={event.thumbnail}
+                          alt=""
+                          className="w-8 h-8 rounded object-cover flex-shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`text-xs font-medium truncate ${isDark ? "text-white" : "text-gray-900"
+                            }`}
+                        >
+                          {event.title}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-[10px] font-mono ${isDark ? "text-purple-400" : "text-purple-600"
+                              }`}
+                          >
+                            {event.year}
+                          </span>
+                          <span
+                            className={`text-[9px] ${isDark ? "text-white/30" : "text-gray-400"
+                              }`}
+                          >
+                            {event.category}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-            {/* Right icons */}
-            <Box sx={{ flexGrow: 0 }}>
-              <Tooltip title="GitHub">
-                <IconButton
-                  sx={{ p: 0, color: "black" }}
-                  href="https://github.com/brucekane25"
-                  target="_blank"
-                >
-                  <GithubIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
-    </Box>
+        {/* View Toggle */}
+        <button
+          onClick={() => setViewMode(viewMode === "map" ? "globe" : "map")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isDark
+              ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+              : "bg-black/5 text-gray-600 hover:bg-black/10 hover:text-gray-900"
+            }`}
+        >
+          {viewMode === "map" ? (
+            <>
+              <Globe className="w-3.5 h-3.5" /> Globe
+            </>
+          ) : (
+            <>
+              <Map className="w-3.5 h-3.5" /> Map
+            </>
+          )}
+        </button>
+
+        {/* GitHub */}
+        <a
+          href="https://github.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isDark
+              ? "text-white/40 hover:text-white hover:bg-white/10"
+              : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+            }`}
+        >
+          <Github className="w-4 h-4" />
+        </a>
+      </div>
+    </motion.nav>
   );
-}
+};
 
 export default Navbart;

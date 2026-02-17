@@ -1,48 +1,41 @@
 "use client";
-import "./globals.css"
-import { useState, useEffect } from "react";
+import "./globals.css";
+import { useState, useEffect, useCallback } from "react";
 import Onboarding from "./components/Onboarding";
 import WhatsNew from "./components/WhatsNew";
-// import MapComponent from "./components/MapComponent";
 import apiClient from "./api/axios";
 import Navbart from "./components/Navbart";
-import Backdrop from "./components/Backdrop";
-import Drawer from "./components/Pane";
 import categorizeEvents from "./components/CategoriseEvents";
-import Fab from "@mui/material/Fab";
-import { styled } from "@mui/material/styles";
-import LeftSliders from "./components/LeftSliders";
-import RightSliders from "./components/RightSliders";
+import { Button } from "@/components/ui/button";
+import { ArrowDown } from "lucide-react";
 import AlternativeDrawer from "./components/AlternativeDrawer";
-import { Icon, IconButton, useMediaQuery } from "@mui/material";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 import BottomAppBar from "./components/BottomBar";
-import LeftArrow from "@mui/icons-material/ArrowBackIosNewTwoTone";
-import RightArrow from "@mui/icons-material/ArrowForwardTwoTone";
-import Close from "@mui/icons-material/Close";
-import DownArrow from "@mui/icons-material/ArrowDownwardTwoTone";
-import Settings from "@mui/icons-material/Settings";
-import SunIcon from "@mui/icons-material/WbSunny";
-import MoonIcon from "@mui/icons-material/DarkMode";
-import Dice from "@mui/icons-material/Casino";
-import Timeline from "@mui/icons-material/Timeline";
 import VerticalSlider from "./components/VerticalSlider";
-import { themes } from "./themes/colorThemes";
 import LeftDrawer from "./components/LeftDrawer";
 import SettingsPanel from "./components/SettingsPanel";
 import SettingsIcons from "./components/SettingsIcons";
+import EventStats from "./components/EventStats";
+import Pane from "./components/Pane";
+import LoadingScreen from "./components/LoadingScreen";
 import dynamic from "next/dynamic";
-const MapComponent = dynamic(() => import("./components/MapComponent"),{ssr:true}
-)
+import { AnimatePresence, motion } from "framer-motion";
+
+const MapComponent = dynamic(() => import("./components/MapComponent"), {
+  ssr: false,
+});
+const GlobeComponent = dynamic(() => import("./components/GlobeComponent"), {
+  ssr: false,
+});
+
 export default function Home() {
   const [events, setEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pages, setPages] = useState(1);
-  const [filterpages, setFilterPages] = useState(0);
   const [panel, setPanel] = useState(true);
   const [limit, setLimit] = useState(2200);
   const [selectedCategory, setSelectedCategory] = useState([]);
-  
   const [randomEvents, setRandomEvents] = useState([]);
   const [totalEvents, setTotalEvents] = useState(null);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -58,39 +51,53 @@ export default function Home() {
   const [country, setcountry] = useState();
   const [mode, setmode] = useState(true);
   const [settings, setsettings] = useState(false);
+  const [mobileSlider, setMobileSlider] = useState(false);
+  const [viewMode, setViewMode] = useState("map");
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // New states
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
-  const StyledFab = styled(Fab)({
-    margin: "0 auto",
-  });
-  const getRandomEvents = (count) => {
-    const filteredEvents = events.filter((event) => event.thumbnail !== null);
-    const shuffled = filteredEvents.sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
-  };
+  // Toggle dark class on html element
+  useEffect(() => {
+    const html = document.documentElement;
+    if (!mode) {
+      html.classList.add("dark");
+    } else {
+      html.classList.remove("dark");
+    }
+  }, [mode]);
 
-  const randomizeEvents = () => {
+  const getRandomEvents = useCallback(
+    (count) => {
+      const filteredEvents = events.filter(
+        (event) => event.thumbnail !== null
+      );
+      const shuffled = filteredEvents.sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, count);
+    },
+    [events]
+  );
+
+  const randomizeEvents = useCallback(() => {
     setRandomEvents(getRandomEvents(16));
     setSelectedEvent(null);
-  };
-  const handleMobileSlider = () => {
-    setMobileSlider(!mobileSlider);
-  };
-  const [mobileSlider, setMobileSlider] = useState(false);
-  const [open, setOpen] = useState(false);
+  }, [getRandomEvents]);
 
   useEffect(() => {
     randomizeEvents();
-  }, [events]);
+  }, [events, randomizeEvents]);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       const data = await fetchEventsWithCoordinates(
         currentPage,
         limit,
         yearRange.startYear,
         yearRange.endYear
       );
-      setOpen(false);
       if (data) {
         const categorizedEvents = await categorizeEvents(data.events);
 
@@ -106,6 +113,7 @@ export default function Home() {
         setTotalEvents(data.totalEvents);
         setFilterTotalEvents(filterEvents.length);
       }
+      setIsLoading(false);
     };
     fetchData();
     setSelectedEvent(null);
@@ -117,7 +125,6 @@ export default function Home() {
     startYear,
     endYear
   ) => {
-    setOpen(true);
     try {
       const response = await apiClient.get("/coordinates", {
         params: { page, limit, startYear, endYear },
@@ -129,32 +136,51 @@ export default function Home() {
     }
   };
 
+  const isDark = !mode;
+
   return (
-    <div className="">
-      <Onboarding />
+    <div className={`${isDark ? "dark" : ""}`}>
+      <Onboarding
+        forceOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
+      />
       <WhatsNew />
+
+      {/* Loading Screen */}
+      <AnimatePresence>
+        {isLoading && events.length === 0 && <LoadingScreen isDark={isDark} />}
+      </AnimatePresence>
+
+      {/* Mobile Vertical Slider */}
       {!isDesktop && mobileSlider && (
         <div className="fixed z-[999] bottom-[47vh] top-auto translate-y-1/2 right-2 flex flex-col items-center gap-2">
           <VerticalSlider
-            className=""
             setSelectedEvent={setSelectedEvent}
             yearRange={yearRange}
             setYearRange={setYearRange}
+            mode={mode}
           />
         </div>
       )}
 
+      {/* Mobile slider close button */}
       {!isDesktop && isSlider && (
         <div className="fixed z-[9999] bottom-[5vh] top-auto left-1/2 -translate-x-1/2">
-          <button onClick={() => setIsSlider(!isSlider)}>
-            <StyledFab color={mode ? "success" : "error"}>
-              <DownArrow />
-            </StyledFab>
-          </button>
+          <Button
+            onClick={() => setIsSlider(!isSlider)}
+            className={`rounded-full ${
+              isDark
+                ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
+                : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+            }`}
+          >
+            <ArrowDown />
+          </Button>
         </div>
       )}
 
       <div className="main-cont h-screen w-screen overflow-hidden">
+        {/* Left drawer */}
         <LeftDrawer
           isDesktop={isDesktop}
           setisLeftOpen={setisLeftOpen}
@@ -163,15 +189,15 @@ export default function Home() {
           events={events}
           onEventClick={setSelectedEvent}
         />
+
         <div
-          className={`canvas flex flex-col relative  transition-all h-full
-         ${isDesktop && isOpen ? "max-w-[70%]" : "w-full"}  
-         `}
+          className={`canvas flex flex-col relative transition-all h-full
+           ${isDesktop && isOpen ? "max-w-[70%]" : "w-full"}
+          `}
         >
+          {/* Navbar / Bottom Bar */}
           {isDesktop ? (
-            <div
-              className={`z-[99999]`}
-            >
+            <div className="z-[99999]">
               <Navbart
                 setSelectedEvent={setSelectedEvent}
                 isLeftOpen={isLeftOpen}
@@ -181,6 +207,9 @@ export default function Home() {
                 mode={mode}
                 setmode={setmode}
                 setcountry={setcountry}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                events={events}
               />
             </div>
           ) : (
@@ -193,8 +222,12 @@ export default function Home() {
               setIsSlider={setIsSlider}
               mode={mode}
               setmode={setmode}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
             />
           )}
+
+          {/* Desktop Settings Icons (Floating Dock) */}
           {isDesktop && (
             <SettingsIcons
               panel={panel}
@@ -207,18 +240,20 @@ export default function Home() {
               isOpen={isOpen}
               setsettings={setsettings}
               settings={settings}
+              setStatsOpen={setStatsOpen}
             />
           )}
 
+          {/* Settings Panel */}
           <div
             className={`absolute panel-cont   
-    transition-opacity duration-500 ease-in-out 
-    ${settings ? "opacity-100" : "opacity-0 pointer-events-none"}
-    ${
-      isDesktop
-        ? "right-40 mr-20 top-[53%] -translate-y-1/2 z-[999]"
-        : " h-[75vh] top-1/2 -translate-y-1/2 z-[9999]  left-1/2 -translate-x-1/2"
-    }`}
+              transition-opacity duration-500 ease-in-out 
+              ${settings ? "opacity-100" : "opacity-0 pointer-events-none"}
+              ${
+                isDesktop
+                  ? "right-40 mr-20 top-[53%] -translate-y-1/2 z-[999]"
+                  : " h-[75vh] top-1/2 -translate-y-1/2 z-[9999] left-1/2 -translate-x-1/2"
+              }`}
           >
             <SettingsPanel
               isDesktop={isDesktop}
@@ -238,11 +273,23 @@ export default function Home() {
               setcountry={setcountry}
               setSelectedCategory={setSelectedCategory}
               mode={mode}
+              onShowTutorial={() => setShowTutorial(true)}
+            />
+          </div>
+          
+           {/* Event Stats Panel */}
+           <div className={`absolute top-20 right-5 z-[990] hidden lg:block`}>
+            <EventStats
+              isOpen={statsOpen}
+              onClose={() => setStatsOpen(false)}
+              events={events}
+              mode={mode}
             />
           </div>
 
+          {/* Random Events Drawers */}
           {isDesktop ? (
-            <Drawer
+            <Pane
               setIsOpen={setIsOpen}
               mode={mode}
               isOpen={isOpen}
@@ -260,14 +307,43 @@ export default function Home() {
               setIsSlider={setIsSlider}
             />
           )}
-          <div className="relative  h-full w-full">
-            <Backdrop open={open} setOpen={setOpen} />
-            <MapComponent
-              events={events}
-              // country={country}
-              mode={mode}
-              selectedEvent={selectedEvent}
-            />
+
+          {/* Main View — Map or Globe */}
+          <div className="relative h-full w-full">
+            <AnimatePresence mode="wait">
+              {viewMode === "map" ? (
+                <motion.div
+                  key="map"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="h-full w-full"
+                >
+                  <MapComponent
+                    events={events}
+                    mode={mode}
+                    selectedEvent={selectedEvent}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="globe"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="h-full w-full"
+                >
+                  <GlobeComponent
+                    events={events}
+                    mode={mode}
+                    selectedEvent={selectedEvent}
+                    onEventSelect={setSelectedEvent}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

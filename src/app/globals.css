@@ -1,28 +1,323 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+@custom-variant dark (&:is(.dark *));
+
+/* ===== Leaflet Overrides ===== */
 .leaflet-popup-content-wrapper {
-  min-width: 370px; /* Set minimum width */
+  min-width: 370px;
   max-width: 700px;
-   border: none; 
-  box-shadow: none; /* Remove shadow */
+  border: none;
+  box-shadow: none;
   background: transparent;
-  
-  /* Set maximum width */
 }
 
 .leaflet-popup-content {
   margin: 0;
-  padding: 0; /* Remove extra margins */
-  background: transparent;/* Set maximum width */
-  width: 100%; /* Ensure it takes full width of the wrapper */
+  padding: 0;
+  background: transparent;
+  width: 100%;
 }
 
 .leaflet-popup-tip {
-  display: none;/*  Optionally hide the popup tip/arrow if it's causing alignment issues*/
+  display: none;
 }
 
 .leaflet-popup {
   border: none;
-  box-shadow: none; 
-  background: transparent; 
+  box-shadow: none;
+  background: transparent;
+}
+
+/* ===== Design Tokens ===== */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Custom Gloria tokens */
+  --color-gloria-accent: var(--gloria-accent);
+  --color-gloria-glow: var(--gloria-glow);
+  --color-gloria-surface: var(--gloria-surface);
+  --color-gloria-surface-hover: var(--gloria-surface-hover);
+}
+
+/* ===== Light Theme ===== */
+:root {
+  --radius: 0.75rem;
+  --background: hsl(220 20% 97%);
+  --foreground: hsl(220 20% 10%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(220 20% 10%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(220 20% 10%);
+  --primary: hsl(250 70% 55%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(220 15% 92%);
+  --secondary-foreground: hsl(220 20% 20%);
+  --muted: hsl(220 15% 92%);
+  --muted-foreground: hsl(220 10% 45%);
+  --accent: hsl(250 60% 95%);
+  --accent-foreground: hsl(250 70% 45%);
+  --destructive: hsl(0 80% 60%);
+  --border: hsl(220 15% 88%);
+  --input: hsl(220 15% 88%);
+  --ring: hsl(250 70% 55%);
+  --chart-1: hsl(250 70% 55%);
+  --chart-2: hsl(170 60% 45%);
+  --chart-3: hsl(30 90% 55%);
+  --chart-4: hsl(340 75% 55%);
+  --chart-5: hsl(200 70% 50%);
+  --sidebar: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(220 20% 10%);
+  --sidebar-primary: hsl(250 70% 55%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(250 60% 95%);
+  --sidebar-accent-foreground: hsl(250 70% 45%);
+  --sidebar-border: hsl(220 15% 88%);
+  --sidebar-ring: hsl(250 70% 55%);
+
+  --gloria-accent: hsl(250 70% 55%);
+  --gloria-glow: hsl(250 80% 65% / 0.3);
+  --gloria-surface: hsl(0 0% 100% / 0.7);
+  --gloria-surface-hover: hsl(0 0% 100% / 0.9);
+}
+
+/* ===== Dark Theme ===== */
+.dark {
+  --background: hsl(230 20% 7%);
+  --foreground: hsl(220 15% 93%);
+  --card: hsl(230 20% 11%);
+  --card-foreground: hsl(220 15% 93%);
+  --popover: hsl(230 20% 11%);
+  --popover-foreground: hsl(220 15% 93%);
+  --primary: hsl(250 80% 65%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(230 18% 16%);
+  --secondary-foreground: hsl(220 15% 85%);
+  --muted: hsl(230 18% 16%);
+  --muted-foreground: hsl(220 10% 55%);
+  --accent: hsl(250 40% 20%);
+  --accent-foreground: hsl(250 80% 75%);
+  --destructive: hsl(0 70% 55%);
+  --border: hsl(230 15% 18%);
+  --input: hsl(230 15% 18%);
+  --ring: hsl(250 80% 65%);
+  --chart-1: hsl(250 80% 65%);
+  --chart-2: hsl(170 60% 50%);
+  --chart-3: hsl(30 90% 60%);
+  --chart-4: hsl(340 75% 60%);
+  --chart-5: hsl(200 70% 55%);
+  --sidebar: hsl(230 20% 9%);
+  --sidebar-foreground: hsl(220 15% 93%);
+  --sidebar-primary: hsl(250 80% 65%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(250 40% 20%);
+  --sidebar-accent-foreground: hsl(250 80% 75%);
+  --sidebar-border: hsl(230 15% 18%);
+  --sidebar-ring: hsl(250 80% 65%);
+
+  --gloria-accent: hsl(250 80% 65%);
+  --gloria-glow: hsl(250 90% 70% / 0.25);
+  --gloria-surface: hsl(230 20% 12% / 0.8);
+  --gloria-surface-hover: hsl(230 20% 16% / 0.9);
+}
+
+/* ===== Base Styles ===== */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* ===== Glassmorphism Utilities ===== */
+.glass {
+  background: var(--gloria-surface);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid hsl(0 0% 100% / 0.12);
+}
+
+.glass-dark {
+  background: hsl(230 20% 10% / 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid hsl(0 0% 100% / 0.06);
+}
+
+.glass-card {
+  background: var(--gloria-surface);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: var(--gloria-surface-hover);
+  border-color: hsl(0 0% 100% / 0.18);
+  box-shadow: 0 8px 32px hsl(0 0% 0% / 0.12);
+  transform: translateY(-2px);
+}
+
+/* ===== Glow Effects ===== */
+.glow {
+  box-shadow: 0 0 20px var(--gloria-glow), 0 0 60px var(--gloria-glow);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px var(--gloria-glow);
+}
+
+.glow-border {
+  border: 1px solid var(--gloria-accent);
+  box-shadow: 0 0 12px var(--gloria-glow), inset 0 0 12px var(--gloria-glow);
+}
+
+/* ===== Animation Keyframes ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--gloria-glow); }
+  50% { box-shadow: 0 0 24px var(--gloria-glow), 0 0 48px var(--gloria-glow); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.08), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+.animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+.animate-spin-slow { animation: spin-slow 20s linear infinite; }
+
+/* ===== Category Colors ===== */
+.category-war { --cat-color: hsl(0 70% 55%); }
+.category-politics { --cat-color: hsl(250 70% 55%); }
+.category-culture { --cat-color: hsl(30 90% 55%); }
+.category-science { --cat-color: hsl(170 60% 45%); }
+.category-religion { --cat-color: hsl(45 90% 50%); }
+.category-disaster { --cat-color: hsl(15 80% 50%); }
+.category-exploration { --cat-color: hsl(200 70% 50%); }
+.category-default { --cat-color: hsl(220 10% 50%); }
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(220 10% 40% / 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 10% 40% / 0.5);
+}
+
+/* ===== Leaflet Dark Mode Overrides ===== */
+.dark .leaflet-container {
+  background: hsl(230 20% 7%) !important;
+}
+
+.dark .leaflet-control-zoom a {
+  background: hsl(230 20% 12% / 0.9) !important;
+  color: hsl(220 15% 85%) !important;
+  border-color: hsl(230 15% 20%) !important;
+  backdrop-filter: blur(12px);
+}
+
+.dark .leaflet-control-layers {
+  background: hsl(230 20% 12% / 0.9) !important;
+  color: hsl(220 15% 85%) !important;
+  border-color: hsl(230 15% 20%) !important;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+}
+
+.leaflet-control-zoom a {
+  background: hsl(0 0% 100% / 0.8) !important;
+  backdrop-filter: blur(12px);
+  border: none !important;
+  transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:hover {
+  background: hsl(0 0% 100% / 0.95) !important;
+}
+
+.leaflet-control-layers {
+  background: hsl(0 0% 100% / 0.8) !important;
+  backdrop-filter: blur(12px);
+  border-radius: 10px !important;
+  border: none !important;
+  padding: 6px !important;
 }

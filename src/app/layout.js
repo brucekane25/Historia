@@ -1,31 +1,17 @@
-import { Geist, Geist_Mono } from "next/font/google";
-// import "./globals.css";
 import 'leaflet/dist/leaflet.css';
 import 'react-leaflet-markercluster/styles';
-import VisitorCounter from "./components/VisitorCounter";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata = {
-  title: "Gloria",
-  description: "A simple Event Visualiser",
+  title: "Gloria — Explore History on a Globe",
+  description: "An interactive 3D globe and map that lets you explore thousands of historical events across every era, region, and category. Discover wars, revolutions, discoveries, and more.",
+  keywords: ["history", "map", "globe", "events", "timeline", "3D", "interactive"],
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased" style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
         {children}
-      {/* <VisitorCounter/> */}
       </body>
     </html>
   );

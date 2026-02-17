@@ -1,32 +1,7 @@
-"use client"
+"use client";
 import React, { useEffect, useState } from "react";
-import { themes } from "../themes/colorThemes";
-import Settings from "@mui/icons-material/Settings";
-import SunIcon from "@mui/icons-material/WbSunny";
-import MoonIcon from "@mui/icons-material/DarkMode";
-import Dice from "@mui/icons-material/Casino";
-import Timeline from "@mui/icons-material/Timeline";
-import { Fab, styled } from "@mui/material";
-import { Handyman } from "@mui/icons-material";
-
-// Styled FAB
-const StyledFab = styled(Fab)({
-  margin: "0 auto",
-    transition: "transform 0.3s ease, opacity 0.3s ease",
-});
-
-// Keyframe animations using inline <style>
-const fabAnimations = `
-@keyframes slideUp {
-  0% { transform: translateX(40px); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideDown {
-  0% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(40px); opacity: 0; }
-}
-`;
+import { Settings, Sun, Moon, Dice5, LineChart, Wrench, BarChart3 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const SettingsIcons = ({
   panel,
@@ -39,207 +14,93 @@ const SettingsIcons = ({
   isOpen,
   setsettings,
   settings,
+  setStatsOpen,
 }) => {
-  const [showIcons, setShowIcons] = useState(panel);
-  const [animating, setAnimating] = useState(false);
+  const isDark = !mode;
 
-  useEffect(() => {
-    if (panel) {
-      setShowIcons(true);
-    } else {
-      setAnimating(true);
-      setTimeout(() => {
-        setShowIcons(false);
-        setAnimating(false);
-      }, 300); // match animation duration
-    }
-  }, [panel]);
+  const buttons = [
+    {
+      icon: <LineChart className="w-4 h-4" />,
+      label: "Timeline",
+      onClick: () => setisLeftOpen(!isLeftOpen),
+    },
+    {
+      icon: <BarChart3 className="w-4 h-4" />,
+      label: "Stats",
+      onClick: () => setStatsOpen(true),
+    },
+    {
+      icon: mode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />,
+      label: mode ? "Dark" : "Light",
+      onClick: () => setmode(!mode),
+    },
+    {
+      icon: <Dice5 className="w-4 h-4" />,
+      label: "Random",
+      onClick: () => setIsOpen(!isOpen),
+    },
+    {
+      icon: <Settings className="w-4 h-4" />,
+      label: "Tweaks",
+      onClick: () => setsettings(!settings),
+    },
+  ];
 
   return (
     <>
-      <style>{fabAnimations}</style>
+      <AnimatePresence>
+        {panel && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="absolute flex flex-col items-end gap-2 bottom-[18%] right-5 z-[999]"
+          >
+            {buttons.map((btn, i) => (
+              <motion.div
+                key={btn.label}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.25 }}
+              >
+                <FloatingBtn isDark={isDark} onClick={btn.onClick}>
+                  {btn.icon}
+                  <span className="text-xs font-medium">{btn.label}</span>
+                </FloatingBtn>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {showIcons ? (
-        <div
-          className="absolute flex flex-col items-end gap-2 bottom-[18%] right-6 z-[999]"
-          style={{
-            animation: panel
-              ? "slideUp 0.3s ease forwards"
-              : "slideDown 0.3s ease forwards",
-          }}
-        >
-          {/* <StyledFab
-            title="Timeline"
-            onClick={() => setisLeftOpen(!isLeftOpen)}
-            sx={{
-              backgroundColor: mode ? themes.light.background : "gray",
-              ":hover": {
-                backgroundColor: mode
-                  ? themes.light.sbackground
-                  : themes.dark.background,
-              },
-            }}
-          > */}
-            <SettingsPlaceholder mode={mode} onClick={() => {
-              setisLeftOpen(!isLeftOpen)
-            }
-            }>
-
-            <Timeline
-              // sx={{ color: !mode ? "white" : "black" }} 
-              />
-            Timeline
-            </SettingsPlaceholder>
-            
-          {/* </StyledFab> */}
-
-          {/* <StyledFab
-            onClick={() => setmode(!mode)}
-            title={mode ? "Dark Mode" : "Light Mode"}
-            sx={{
-              backgroundColor: mode ? themes.light.background : "gray",
-              ":hover": {
-                backgroundColor: mode
-                  ? themes.light.sbackground
-                  : themes.dark.background,
-              },
-            }}
-          > */}
-
-            <SettingsPlaceholder mode={mode} onClick={() => {
-              setmode(!mode)
-            }
-            }>
-              
-            {mode ? (<>
-              <MoonIcon
-                //  sx={{ color: !mode ? "white" : "black" }} 
-                 />
-              Dark Mode
-            </>
-            ) : (<>
-              <SunIcon
-              // sx={{ color: !mode ? "white" : "black" }} 
-              />
-            Light Mode  
-            </>
-            )}
-
-            </SettingsPlaceholder>
-          {/* </StyledFab> */}
-
-          {/* <StyledFab
-            title="Random Events"
-            sx={{
-              backgroundColor: mode ? themes.light.background : "gray",
-              ":hover": {
-                backgroundColor: mode
-                  ? themes.light.sbackground
-                  : themes.dark.background,
-              },
-            }}
-            onClick={() => setIsOpen(!isOpen)}
-          > */}
-            <SettingsPlaceholder mode={mode} onClick={() => {
-              setIsOpen(!isOpen)
-            }
-            }>
-
-            <Dice
-            //  sx={{ color: !mode ? "white" : "black" }} 
-             />
-            Random Events
-            </SettingsPlaceholder>
-          {/* </StyledFab> */}
-
-          {/* <StyledFab
-            title="Tweaks"
-            sx={{
-              backgroundColor: mode ? themes.light.background : "gray",
-              ":hover": {
-                backgroundColor: mode
-                  ? themes.light.sbackground
-                  : themes.dark.background,
-              },
-            }}
-            onClick={() => setsettings(!settings)}
-          > */}
-               <SettingsPlaceholder onClick={() => setsettings(!settings)} mode={mode}>
-
-            <Settings 
-            // sx={{ color: !mode ? "white" : "black" }} 
-            />
-            Tweaks
-               </SettingsPlaceholder>
-          {/* </StyledFab> */}
-
-          {/* <StyledFab
-            title="Settings"
-            onClick={() => setPanel(!panel)}
-            sx={{
-              backgroundColor: mode ? themes.light.background : "gray",
-              ":hover": {
-                backgroundColor: mode
-                  ? themes.light.sbackground
-                  : themes.dark.background,
-              },
-            }}
-          > */}
-        {/* <SettingsPlaceholder onClick={() => setPanel(!panel)} mode={mode}>
-            <Handyman 
-            sx={{ 
-              // color: !mode ? "white" : "black" 
-            }} 
-
-            />
-            Settings
-          </SettingsPlaceholder>   */}
-          {/* </StyledFab> */}
-          
-        </div>
-      ) : (
-        !animating && (<></>
-        )
-      )}
-          <div className="absolute bottom-[8%] right-6 z-[999]">
-            
-              <SettingsPlaceholder
-                mode={mode}
-               onClick={() => {
-                setPanel(!panel)
-              }
-              }>
-
-              <Handyman 
-              // sx={{ color: !mode ? "white" : "black" }}
-               />
-              Settings
-              </SettingsPlaceholder>
-          </div>
+      <div className="absolute bottom-[8%] right-5 z-[999]">
+        <FloatingBtn isDark={isDark} onClick={() => setPanel(!panel)}>
+          <Wrench className="w-4 h-4" />
+          <span className="text-xs font-medium">Settings</span>
+        </FloatingBtn>
+      </div>
     </>
   );
 };
 
 export default SettingsIcons;
 
-
-
-
-
-const SettingsPlaceholder = ({children,mode,onClick}) => {
+function FloatingBtn({ isDark, onClick, children }) {
   return (
-    <div
-    onClick={onClick}
-    style={{
-      color:themes.light.text
-      // backgroundColor:mode?themes.light.background:themes.dark.sbackground,
-      
-      // color:mode?themes.light.text:themes.dark.text,
-    }} 
-    className={` flex hover:cursor-pointer bg-white/50 hover:backdrop-invert-25 hover:scale-105 shadow-2xl ${mode?'shadow-black':'shadow-white/25'}  backdrop-blur-xl justify-between items-center rounded-4xl p-4 gap-4 w-fit`}>
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl transition-all duration-200 cursor-pointer ${isDark
+          ? "glass-dark text-white/80 hover:text-white hover:scale-105 shadow-purple-500/5"
+          : "glass text-gray-700 hover:text-gray-900 hover:scale-105 shadow-black/5"
+        }`}
+      style={{
+        border: isDark
+          ? "1px solid rgba(255,255,255,0.06)"
+          : "1px solid rgba(0,0,0,0.06)",
+      }}
+    >
       {children}
-    </div>
-  )
+    </button>
+  );
 }
-
-

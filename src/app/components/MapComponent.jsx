@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -10,13 +10,13 @@ import {
   LayersControl,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-// import world from "../assets/countries.js";
 import { GeoJSON } from "react-leaflet";
 import india_outline from "../assets/India_Outline_Map.js";
-import { themes } from "../themes/colorThemes.js";
 import Image from "next/image.js";
 
 const MapComponent = ({ events, selectedEvent, mode }) => {
+  const isDark = !mode;
+
   const customIcon = L.icon({
     iconUrl: "/marker-icon.png",
     iconSize: [25, 41],
@@ -29,33 +29,6 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
   const defaultPosition = [0, 0];
   const markersRef = useRef({});
   const clusterGroupRef = useRef(null);
-  const [filteredEvents, setFilteredEvents] = useState([]);
-  const geoJsonRef = useRef(null); // Ref to store the GeoJSON layer
-
-  // Reset clusters, markers, and GeoJSON when the country changes
-  // useEffect(() => {
-  //   if (country != null && world.features[country]) {
-  //     // Clear the previous GeoJSON layer
-  //     if (geoJsonRef.current) {
-  //       geoJsonRef.current.remove(); // Remove the previous GeoJSON layer
-  //     }
-
-  //     // Filter events for the new country
-  //     const geoJsonLayer = L.geoJSON(world.features[country]);
-  //     const filtered = events.filter((event) =>
-  //       geoJsonLayer.getBounds().contains([event.coordinates.lat, event.coordinates.lon])
-  //     );
-  //     setFilteredEvents(filtered);
-
-  //     // Clear the previous markers and clusters
-  //     if (clusterGroupRef.current) {
-  //       clusterGroupRef.current.clearLayers();
-  //     }
-  //   } else {
-  //     // If no country is selected, show all events
-  //     setFilteredEvents(events);
-  //   }
-  // }, [country, events]);
 
   const MapUpdater = ({ selectedEvent }) => {
     const map = useMap();
@@ -71,66 +44,12 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
               marker.openPopup();
             });
           }, 100);
-        } else {
-          console.warn("Marker not found or not part of the cluster group.");
         }
       }
     }, [selectedEvent, map]);
 
     return null;
   };
-
-  // const CountryFocus = ({ country }) => {
-  //   const map = useMap();
-
-  //   useEffect(() => {
-  //     if (country != null && world.features[country]) {
-  //       const bounds = L.geoJSON(world.features[country]).getBounds();
-  //       map.fitBounds(bounds, { padding: [50, 50] });
-  //     }
-  //   }, [country, map]);
-
-  //   return null;
-  // };
-
-  useEffect(() => {
-    // Select the Leaflet zoom controls
-    const zoomInButton = document.querySelector(".leaflet-control-zoom-in");
-    const zoomOutButton = document.querySelector(".leaflet-control-zoom-out");
-    const layerControl = document.querySelector(".leaflet-control-layers");
-  
-    // Apply styles dynamically
-    if (zoomInButton && zoomOutButton) {
-      [zoomInButton, zoomOutButton].forEach((btn) => {
-        btn.style.backgroundColor = mode ? themes.light.background : themes.dark.background;
-        btn.style.color = mode ? "black" : "white";
-        btn.style.border = "none";
-        // btn.style.borderRadius = "8px";
-        btn.style.transition = "all 0.3s ease";
-      });
-    }
-  
-    if (layerControl) {
-      layerControl.style.backgroundColor = mode ?  themes.light.background : themes.dark.background;
-      // layerControl.style.color = mode === "dark" ? "#fff" : "#000";
-      layerControl.style.borderRadius = "8px";
-      layerControl.style.padding = "5px";
-    }
-  }, [mode]); // Runs whenever mode changes
-  
-  useEffect(() => {
-    
-    // console.log("clusterRef OBJ:", clusterGroupRef.current);
-    
-  }, [clusterGroupRef.current])
-  
-
-  useEffect(() => {
-    const mapContainer = document.querySelector(".leaflet-container");
-    if (mapContainer) {
-      mapContainer.style.backgroundColor = mode ? "white" : "black";
-    }
-  }, [mode]);
 
   return (
     <MapContainer
@@ -144,6 +63,7 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
       ]}
       maxBoundsViscosity={1}
       style={{ margin: 0, padding: 0, minHeight: "100%", width: "100%" }}
+      className={isDark ? "dark" : ""}
     >
       <LayersControl position="topright">
         <LayersControl.Overlay name="OpenStreetMap">
@@ -153,30 +73,30 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
           />
         </LayersControl.Overlay>
 
-        <LayersControl.Overlay  name="MapTiler">
+        <LayersControl.Overlay name="MapTiler">
           <TileLayer
             attribution='<a href="https://www.maptiler.com/copyright">MapTiler</a>'
             url="https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=pUdLG48OR57uT9vDP5mK"
           />
         </LayersControl.Overlay>
 
-        <LayersControl.Overlay checked={!mode} name="CartoCDN-dark">
+        <LayersControl.Overlay checked={isDark} name="CartoCDN-dark">
           <TileLayer
-            attribution='<a href="https://www.maptiler.com/copyright">ThunderForestMaps</a>'
+            attribution='<a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
         </LayersControl.Overlay>
 
-        <LayersControl.Overlay checked={mode} name="Detailed">
+        <LayersControl.Overlay checked={!isDark} name="Detailed">
           <TileLayer
-            attribution='<a href="https://www.maptiler.com/copyright">ThunderForestMaps</a>'
+            attribution='<a href="https://www.esri.com">Esri</a>'
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
           />
         </LayersControl.Overlay>
 
         <LayersControl.Overlay name="LightGray">
           <TileLayer
-            attribution='<a href="https://www.maptiler.com/copyright">ThunderForestMaps</a>'
+            attribution='<a href="https://www.esri.com">Esri</a>'
             url="https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
           />
         </LayersControl.Overlay>
@@ -186,37 +106,19 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
       <GeoJSON
         data={india_outline}
         style={{
-          color: mode ? "black" : "grey",
-          weight: 1/8 ,
+          color: isDark ? "grey" : "black",
+          weight: 1 / 8,
           opacity: 1,
           fillOpacity: 0,
         }}
       />
 
-      {/* Country GeoJSON */}
-      {/* {country && world.features[country] && (
-        <GeoJSON
-          key={country} // Force remount on country change
-          data={world.features[country]}
-          ref={geoJsonRef} // Store the GeoJSON layer in a ref
-          style={{
-            color: mode ? "black" : "grey",
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.7,
-          }}
-        />
-      )} */}
-
       {/* MarkerClusterGroup */}
       <MarkerClusterGroup
-
-        // key={country} // Force remount on country change
         ref={clusterGroupRef}
         disableClusteringAtZoom={9}
         maxClusterRadius={60}
         animate
-        
       >
         {events.map((event) => (
           <Marker
@@ -230,39 +132,61 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
             }}
           >
             <Popup>
-              <div style={{backgroundColor:mode?'white':themes.dark.sbackground}} className="min-w-[370px] max-w-2xl p-4 rounded-lg shadow-2xl">
-                <div className="flex flex-row gap-6">
+              <div
+                className="min-w-[370px] max-w-2xl p-4 rounded-xl shadow-2xl"
+                style={{
+                  background: isDark
+                    ? "rgba(15,17,30,0.95)"
+                    : "rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(20px)",
+                  border: isDark
+                    ? "1px solid rgba(255,255,255,0.08)"
+                    : "1px solid rgba(0,0,0,0.06)",
+                }}
+              >
+                <div className="flex flex-row gap-4">
                   {event.thumbnail && (
                     <Image
-                      width={`160`}
-                      height={`160`}
-                      className="object-cover rounded-md flex-shrink"
+                      width={160}
+                      height={160}
+                      className="object-cover rounded-lg flex-shrink-0"
                       src={event.thumbnail}
                       alt={event.title || "Event Thumbnail"}
                     />
                   )}
 
-                  <div className="flex flex-col justify-between gap-3 flex-grow">
+                  <div className="flex flex-col justify-between gap-2 flex-grow">
                     <div>
-                      <h3 style={{color:mode?themes.light.text:themes.dark.text}} className="text-base line-clamp-6 font-normal">
+                      <h3
+                        className={`text-sm font-medium leading-snug line-clamp-4 ${isDark ? "text-white" : "text-gray-900"
+                          }`}
+                      >
                         {event.title}
                       </h3>
                       <a
                         href={`https://en.wikipedia.org/?curid=${event.pageID}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 hover:underline text-sm"
+                        className="text-purple-400 hover:text-purple-300 text-xs mt-1 inline-block"
                       >
-                        Know More
+                        Read on Wikipedia →
                       </a>
                     </div>
-                    <div  style={{color:mode?themes.light.text:themes.dark.text}} className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold ">
+                    <div className="flex justify-between items-center">
+                      <span
+                        className={`text-xl font-bold ${isDark ? "text-purple-400" : "text-purple-600"
+                          }`}
+                      >
                         {event.year}
-                      </h3>
-                      <h3 className="text-base font-medium ">
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark
+                            ? "bg-white/10 text-white/70"
+                            : "bg-gray-100 text-gray-600"
+                          }`}
+                      >
                         {event.category}
-                      </h3>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -273,7 +197,6 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
       </MarkerClusterGroup>
 
       <MapUpdater selectedEvent={selectedEvent} />
-      {/* <CountryFocus country={country} /> */}
     </MapContainer>
   );
 };

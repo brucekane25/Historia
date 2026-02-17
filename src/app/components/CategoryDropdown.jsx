@@ -1,21 +1,23 @@
 "use client"
-import { useEffect, useState } from "react";
-import { Chip, Stack } from "@mui/material";
-import EventIcon from "@mui/icons-material/Event";
-import CakeIcon from "@mui/icons-material/Cake";
-import SentimentDissatisfiedIcon from "@mui/icons-material/SentimentDissatisfied";
-import PublicIcon from "@mui/icons-material/Public";
-import HistoryIcon from "@mui/icons-material/History";
-import ScienceIcon from "@mui/icons-material/Science";
-import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import GroupIcon from "@mui/icons-material/Group";
-import ReportProblemIcon from "@mui/icons-material/ReportProblem";
-import ChurchIcon from "@mui/icons-material/Church";
-import PaletteIcon from "@mui/icons-material/Palette";
-import EcoIcon from "@mui/icons-material/Nature";
-import SearchIcon from "@mui/icons-material/Search";
-import CategoryIcon from "@mui/icons-material/Category";
+import { useEffect } from "react";
+import { Chip } from "@/components/ui/chip";
+import {
+  Calendar as EventIcon,
+  Cake as CakeIcon,
+  Frown as SentimentDissatisfiedIcon,
+  Globe as PublicIcon,
+  Landmark as HistoryIcon,
+  FlaskConical as ScienceIcon,
+  Sword as MilitaryTechIcon,
+  CircleDollarSign as AttachMoneyIcon,
+  Users as GroupIcon,
+  TriangleAlert as ReportProblemIcon,
+  Church as ChurchIcon,
+  Palette as PaletteIcon,
+  Leaf as EcoIcon,
+  Search as SearchIcon,
+  AppWindow as CategoryIcon,
+} from "lucide-react";
 
 const CategoryDropdown = ({ onCategoryChange, clr, mode, selectedCategories, setSelectedCategories }) => {
   const categories = [
@@ -52,26 +54,19 @@ const CategoryDropdown = ({ onCategoryChange, clr, mode, selectedCategories, set
   };
 
   return (
-    <Stack direction="row" spacing={1} flexWrap="wrap" columnGap={1} rowGap={1} className="flex justify-center items-center">
+    <div className="flex flex-row flex-wrap justify-center items-center gap-2">
       {categories.map((category) => (
         <Chip
           key={category.value}
-          label={category.label}
-          icon={category.icon}
           onClick={() => handleCategorySelect(category.value)}
-          onDelete={
-            selectedCategories.includes(category.value)
-              ? () => handleCategorySelect(category.value)
-              : undefined
-          }
-          color={selectedCategories.includes(category.value) ? mode ? "success" : 'error' : "default"}
-          variant="filled"
-          style={{
-            color: selectedCategories.includes(category.value) ? "white" : !mode ? "#fff" : "#000",
-          }}
-        />
+          variant={selectedCategories.includes(category.value) ? (mode ? "success" : "destructive") : "default"}
+          className="cursor-pointer"
+        >
+          {category.icon}
+          <span className="ml-2">{category.label}</span>
+        </Chip>
       ))}
-    </Stack>
+    </div>
   );
 };
 

@@ -1,19 +1,20 @@
-"use client"
-import React, { useState } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Slider from '@mui/material/Slider';
-import Input from '@mui/material/Input';
-import Stack from '@mui/material/Stack';
+"use client";
+import React, { useState } from "react";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 
-const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange }) => {
-  const [temporaryRange, setTemporaryRange] = useState([yearRange.startYear, yearRange.endYear]);
+const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, mode }) => {
+  const isDark = !mode;
+  const [temporaryRange, setTemporaryRange] = useState([
+    yearRange.startYear,
+    yearRange.endYear,
+  ]);
 
-  const handleChange = (event, newValue) => {
+  const handleChange = (newValue) => {
     setTemporaryRange(newValue);
   };
 
-  const handleChangeCommitted = (event, newValue) => {
+  const handleChangeCommitted = (newValue) => {
     setYearRange({ startYear: newValue[0], endYear: newValue[1] });
     setSelectedEvent({ startYear: newValue[0], endYear: newValue[1] });
   };
@@ -41,87 +42,62 @@ const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange }) => {
   };
 
   return (
-    <Box
-      sx={{
-        backgroundColor: 'white',
-        paddingX: '9px',
-        borderRadius: '8px',
-        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-       
+    <div
+      className={`px-2 py-3 rounded-xl shadow-xl ${isDark ? "glass-dark" : "glass"
+        }`}
+      style={{
+        border: isDark
+          ? "1px solid rgba(255,255,255,0.06)"
+          : "1px solid rgba(0,0,0,0.06)",
       }}
     >
-      <Stack direction="row" spacing={2} alignItems="center" justifyContent="center">
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            height: '56vh',
-            width: '100%',
-          }}
-        >
-          <Typography variant="caption" sx={{ mb: 1, color: 'gray' }}>
-            End Year
-          </Typography>
+      <div className="flex flex-row space-x-2 items-center justify-center">
+        <div className="flex flex-col items-center h-[56vh] w-full">
+          <p className={`text-[10px] mb-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+            End
+          </p>
           <Input
             value={temporaryRange[1]}
-            size="small"
             onChange={handleInputChangeEnd}
             onBlur={handleInputBlurEnd}
-            inputProps={{
-              step: 1,
-              min: -1458,
-              max: 2024,
-              type: 'number',
-              'aria-labelledby': 'input-slider-end',
-            }}
-            sx={{
-              width: '70px',
-              textAlign: 'center',
-              mb: 2,
-              border: '1px  #ccc',
-              borderRadius: '4px',
-            }}
-          />
-          <Slider
-            getAriaLabel={() => 'Year range'}
-            value={temporaryRange}
-            onChange={handleChange}
-            orientation="vertical"
-            onChangeCommitted={handleChangeCommitted}
-            valueLabelDisplay="on"
+            type="number"
             min={-1458}
             max={2024}
-            aria-labelledby="range-slider"
-            color="secondary"
-            sx={{ height:'full' ,minHeight: '70px' }}
+            step={1}
+            className={`w-16 text-center text-xs font-mono mb-2 rounded-lg border ${isDark
+                ? "bg-white/5 border-white/10 text-white"
+                : "bg-black/5 border-black/10 text-gray-900"
+              }`}
+          />
+          <Slider
+            value={temporaryRange}
+            onValueChange={handleChange}
+            onValueCommit={handleChangeCommitted}
+            orientation="vertical"
+            min={-1458}
+            max={2024}
+            step={1}
+            className="h-full min-h-[70px]"
           />
           <Input
             value={temporaryRange[0]}
-            size="small"
             onChange={handleInputChangeStart}
             onBlur={handleInputBlurStart}
-            inputProps={{
-              step: 1,
-              min: -1458,
-              max: 2024,
-              type: 'number',
-              'aria-labelledby': 'input-slider-start',
-            }}
-            sx={{
-              width: '70px',
-              textAlign: 'center',
-              mt: 2,
-              border: '1px  #ccc',
-              borderRadius: '4px',
-            }}
+            type="number"
+            min={-1458}
+            max={2024}
+            step={1}
+            className={`w-16 text-center text-xs font-mono mt-2 rounded-lg border ${isDark
+                ? "bg-white/5 border-white/10 text-white"
+                : "bg-black/5 border-black/10 text-gray-900"
+              }`}
           />
-          <Typography variant="caption" sx={{ mt: 1, color: 'gray' }}>
-            Start Year
-          </Typography>
-        </Box>
-      </Stack>
-    </Box>
+          <p className={`text-[10px] mt-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+            Start
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

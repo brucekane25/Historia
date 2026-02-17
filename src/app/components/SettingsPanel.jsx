@@ -1,15 +1,10 @@
-"use client"
+"use client";
 import { useState } from "react";
-import Button from "@mui/material/Button";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Slider from "@mui/material/Slider";
+import { Button } from "@/components/ui/button";
 import RangeSlider from "./RangeSlider";
 import RightSliders from "./RightSliders";
-import { themes } from "../themes/colorThemes";
-// import world from "../assets/countries";
 import CategoryDropdown from "./CategoryDropdown";
-import { Close } from "@mui/icons-material";
+import { X, Filter, Sliders, BarChart3, HelpCircle } from "lucide-react";
 
 export default function SettingsPanel({
   isDesktop,
@@ -29,10 +24,9 @@ export default function SettingsPanel({
   limit,
   filterTotalEvents,
   totalEvents,
+  onShowTutorial,
 }) {
-  const [style, setStyle] = useState("Tiles");
-
-  const styles = ["Basic", "Miscellaneous", "Calendar", "Map"];
+  const isDark = !mode;
 
   const handleClearFilters = () => {
     setYearRange({ startYear: -3000, endYear: 2024 });
@@ -42,146 +36,137 @@ export default function SettingsPanel({
 
   return (
     <div
+      className={`rounded-2xl shadow-2xl ${isDesktop ? "p-5" : "py-3 px-4 min-w-[97vw] overflow-scroll"
+        } max-w-[550px] ${isDark ? "glass-dark" : "glass"}`}
       style={{
-        backgroundColor: mode
-          ? themes.light.pbackground
-          : themes.dark.pbackground,
-        color: mode ? themes.light.text : themes.dark.text,
+        color: isDark ? "#e5e7eb" : "#111827",
+        border: isDark
+          ? "1px solid rgba(255,255,255,0.06)"
+          : "1px solid rgba(0,0,0,0.06)",
       }}
-      className={` 
-        ${isDesktop ? "p-6" : "py-2 px-3 min-w-[97vw] overflow-scroll"}
-        rounded-2xl  shadow-lg
-         max-w-[550px]
-        `}
     >
-      <header className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          <span className="text-3xl"> &gt; </span>
-          <h2 className="ml-2 text-3xl font-semibold">Tweaks</h2>
+      {/* Header */}
+      <header className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Sliders
+            className={`w-5 h-5 ${isDark ? "text-purple-400" : "text-purple-600"
+              }`}
+          />
+          <h2 className="text-xl font-semibold">Tweaks</h2>
         </div>
-        <div className="flex items-center">
-          <Button
+        <div className="flex items-center gap-2">
+          <button
             onClick={handleClearFilters}
-            variant="outlined"
-            color={mode ? "success" : "error"}
-            size="small"
-            className="mr-2"
+            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${isDark
+                ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                : "bg-black/5 text-gray-500 hover:bg-black/10 hover:text-gray-900"
+              }`}
           >
             Clear Filters
-          </Button>
-          <div
-            onClick={() => {
-              setsettings(false);
-            }}
-            className={`rounded-full p-2 shadow-md cursor-pointer transition-all duration-300  focus:outline-none ${
-              mode
-                ? "text-black bg-white hover:bg-gray-200"
-                : "text-white bg-gray-800 hover:bg-gray-700"
-            }`}
+          </button>
+          <button
+            onClick={() => setsettings(false)}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark
+                ? "text-white/40 hover:text-white hover:bg-white/10"
+                : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+              }`}
           >
-            <Close className="w-5 h-5" />
-          </div>
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
-      <section>
-        {/* <div className="grid grid-cols-4 gap-4 mb-6">
-          {styles.map((item) => (
-            <Button
-              key={item}
-              onClick={() => setStyle(item)}
-              variant={style === item ? "contained" : "outlined"}
-              color={style === item ? (mode ? "success" : "error") : "inherit"}
-            >
-              {item}
-            </Button>
-          ))}
-        </div> */}
+      {/* Sections */}
+      <div className="space-y-3">
+        {/* Category Filter */}
+        <SettingsSection
+          icon={<Filter className="w-3.5 h-3.5" />}
+          label="Categories"
+          isDark={isDark}
+        >
+          <CategoryDropdown
+            onCategoryChange={setSelectedCategory}
+            clr={setSelectedEvent}
+            mode={mode}
+            selectedCategories={selectedCategory}
+            setSelectedCategories={setSelectedCategory}
+          />
+        </SettingsSection>
 
-        <div className={`${isDesktop ? "space-y-4 mb-3" : "space-y-2 mb-2"} `}>
-          {/* <div
-            style={{
-              backgroundColor: mode
-                ? themes.light.sbackground
-                : themes.dark.sbackground,
-            }}
-            className="flex items-center justify-around p-2 h-16 rounded-lg"
-          > */}
-          {/* <span className="text-sm font-medium">Country</span> */}
-          {/* <select
-              style={{
-                backgroundColor: !mode ? themes.light.text : themes.dark.text,
-              }}
-              onChange={(e) => {
-                setcountry(e.target.value);
-              }}
-              value={country}
-            >
-              <option value="">Select a Country</option>
-              {world.features.map((cont, index) => (
-                <option value={index} key={index}>
-                  {world.features[index].properties.ADMIN}
-                </option>
-              ))}
-            </select> */}
-          {/* </div> */}
-          <div
-            style={{
-              backgroundColor: mode
-                ? themes.light.sbackground
-                : themes.dark.sbackground,
-            }}
-            className="flex items-center justify-between p-2 bg-gray-100 rounded-lg"
-          >
-            <CategoryDropdown
-              onCategoryChange={setSelectedCategory}
-              clr={setSelectedEvent}
-              mode={mode}
-              selectedCategories={selectedCategory}
-              setSelectedCategories={setSelectedCategory}
-            />
-          </div>
-        </div>
+        {/* Year Range */}
+        <SettingsSection
+          icon={<BarChart3 className="w-3.5 h-3.5" />}
+          label="Year Range"
+          isDark={isDark}
+        >
+          <RangeSlider
+            setSelectedEvent={setSelectedEvent}
+            yearRange={yearRange}
+            setYearRange={setYearRange}
+            mode={mode}
+          />
+        </SettingsSection>
 
-        <div className={`${isDesktop ? "space-y-3" : "space-y-2"} `}>
-          <div
-            style={{
-              backgroundColor: mode
-                ? themes.light.sbackground
-                : themes.dark.sbackground,
-            }}
-            className="flex justify-between  items-center px-3 py-6 bg-gray-100 rounded-lg"
+        {/* Data Controls */}
+        <SettingsSection
+          icon={<Sliders className="w-3.5 h-3.5" />}
+          label="Data"
+          isDark={isDark}
+        >
+          <RightSliders
+            setLimit={setLimit}
+            mode={mode}
+            pages={pages}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            limit={limit}
+            filterTotalEvents={filterTotalEvents}
+            totalEvents={totalEvents}
+          />
+        </SettingsSection>
+
+        {/* Help & Tutorial */}
+        <div className="pt-2">
+          <Button
+            variant="ghost"
+            onClick={onShowTutorial}
+            className={`w-full justify-start gap-2 h-9 text-xs font-normal ${isDark
+                ? "text-white/40 hover:text-white hover:bg-white/5"
+                : "text-gray-500 hover:text-gray-900 hover:bg-black/5"
+              }`}
           >
-            <RangeSlider
-              setSelectedEvent={setSelectedEvent}
-              yearRange={yearRange}
-              setYearRange={setYearRange}
-              mode={mode}
-            />
-          </div>
-          <div>
-            <div
-              style={{
-                backgroundColor: mode
-                  ? themes.light.sbackground
-                  : themes.dark.sbackground,
-              }}
-              className="flex justify-between items-center px-2 py-2 bg-gray-100 rounded-lg"
-            >
-              <RightSliders
-                setLimit={setLimit}
-                mode={mode}
-                pages={pages}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                limit={limit}
-                filterTotalEvents={filterTotalEvents}
-                totalEvents={totalEvents}
-              />
-            </div>
-          </div>
+            <HelpCircle className="w-3.5 h-3.5" />
+            Replay Tutorial
+          </Button>
         </div>
-      </section>
+      </div>
+    </div>
+  );
+}
+
+function SettingsSection({ icon, label, isDark, children }) {
+  return (
+    <div
+      className={`rounded-xl p-3 ${isDark ? "bg-white/[0.03]" : "bg-black/[0.02]"
+        }`}
+      style={{
+        border: isDark
+          ? "1px solid rgba(255,255,255,0.04)"
+          : "1px solid rgba(0,0,0,0.04)",
+      }}
+    >
+      <div className="flex items-center gap-1.5 mb-2">
+        <span className={isDark ? "text-purple-400" : "text-purple-600"}>
+          {icon}
+        </span>
+        <span
+          className={`text-xs font-medium ${isDark ? "text-white/50" : "text-gray-400"
+            }`}
+        >
+          {label}
+        </span>
+      </div>
+      {children}
     </div>
   );
 }

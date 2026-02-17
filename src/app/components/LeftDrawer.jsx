@@ -1,75 +1,71 @@
-"use client"
-import { Drawer } from "@mui/material";
-import { useState } from "react";
+"use client";
+import {
+  Sheet,
+  SheetContent,
+} from "@/components/ui/sheet";
 import EventTimeline from "./EventTimeline";
-import { themes } from "../themes/colorThemes";
-import { styled, Fab } from "@mui/material";
-import { Cancel } from "@mui/icons-material";
+import { X } from "lucide-react";
 
-const LeftDrawer = ({isDesktop, isLeftOpen, setisLeftOpen, events ,onEventClick, mode}) => {
-  const toggleDrawer = (newOpen) => () => {
-    setisLeftOpen(newOpen);
-  };
- const StyledFab = styled(Fab)({
-    margin: "0",
-  });
+const LeftDrawer = ({
+  isDesktop,
+  isLeftOpen,
+  setisLeftOpen,
+  events,
+  onEventClick,
+  mode,
+}) => {
+  const isDark = !mode;
+
   return (
-    <>
-      <Drawer
-        variant="temporary"
-        anchor="left"
-        open={isLeftOpen}
-        onClose={toggleDrawer(false)}
-        PaperProps={{
-          sx: {
-            minWidth: isDesktop? '330px':'290px', 
-            maxWidth: isDesktop?'30vw':'30vw', 
-            backgroundColor: mode?themes.light.pbackground:themes.dark.primary ,
-            color: mode?themes.light.text:themes.dark.text ,
-            boxShadow: "0 0 30px rgba(0, 0, 0, 0.5)",
-            position: 'absolute', 
-            left: isDesktop?'15px':'15px',
-            top: isDesktop? '8vh':'4vh', 
-            height: isDesktop?'90vh':'90vh',
-            borderRadius:'10px',
-            overflow: "hidden" 
-          },
-        }}
-        sx={{
-          '--Drawer-transitionDuration': isLeftOpen ? '0.4s' : '0.2s',
-          '--Drawer-transitionFunction': isLeftOpen
-            ? 'cubic-bezier(0.79,0.14,0.15,0.86)'
-            : 'cubic-bezier(0.77,0,0.18,1)',
+    <Sheet open={isLeftOpen} onOpenChange={setisLeftOpen}>
+      <SheetContent
+        side="left"
+        className="p-0 border-0"
+        style={{
+          minWidth: isDesktop ? "330px" : "290px",
+          maxWidth: isDesktop ? "30vw" : "85vw",
+          backgroundColor: isDark
+            ? "rgba(15,17,30,0.95)"
+            : "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(20px)",
+          color: isDark ? "#e5e7eb" : "#111827",
+          boxShadow: isDark
+            ? "0 0 40px rgba(99,102,241,0.05)"
+            : "0 0 40px rgba(0,0,0,0.08)",
+          position: "absolute",
+          left: isDesktop ? "15px" : "15px",
+          top: isDesktop ? "8vh" : "4vh",
+          height: isDesktop ? "90vh" : "90vh",
+          borderRadius: "16px",
+          overflow: "hidden",
+          border: isDark
+            ? "1px solid rgba(255,255,255,0.06)"
+            : "1px solid rgba(0,0,0,0.06)",
         }}
       >
-        <div className="flex items-center mt-3  mb-2 justify-between px-4">
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <h2 className="text-lg font-semibold">Timeline</h2>
-          <StyledFab
-
-              title="Close"
-              onClick={() => {
-                setisLeftOpen(false);
-              }}
-              sx={{
-                height:'20px',
-                width:'20px',
-                padding:'20px',
-                backgroundColor: mode ? themes.light.background : "gray",
-                ":hover": {
-                  backgroundColor: mode
-                    ? themes.light.sbackground
-                    : themes.dark.background,
-                },
-              }}
-            >
-              <Cancel sx={{ color: !mode ? "white" : "black" }} />
-            </StyledFab>
+          <button
+            onClick={() => setisLeftOpen(false)}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark
+                ? "text-white/40 hover:text-white hover:bg-white/10"
+                : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+              }`}
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <div className= "">
-          <EventTimeline mode={mode} events={events} isLeftOpen={isLeftOpen} setisLeftOpen ={setisLeftOpen} onEventClick={onEventClick}/>
+        <div>
+          <EventTimeline
+            mode={mode}
+            events={events}
+            isLeftOpen={isLeftOpen}
+            setisLeftOpen={setisLeftOpen}
+            onEventClick={onEventClick}
+          />
         </div>
-      </Drawer>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 };
 
