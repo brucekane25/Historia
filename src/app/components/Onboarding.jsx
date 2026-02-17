@@ -78,7 +78,7 @@ const Onboarding = ({ forceOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white">
+      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white z-[99999]">
         <DialogHeader>
           <div className="flex flex-col items-center text-center pt-4">
             <div className="relative mb-4">
@@ -103,10 +103,10 @@ const Onboarding = ({ forceOpen, onClose }) => {
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${i === step
-                  ? "w-6 bg-purple-500"
-                  : i < step
-                    ? "w-1.5 bg-purple-500/40"
-                    : "w-1.5 bg-white/10"
+                ? "w-6 bg-purple-500"
+                : i < step
+                  ? "w-1.5 bg-purple-500/40"
+                  : "w-1.5 bg-white/10"
                 }`}
             />
           ))}

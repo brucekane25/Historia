@@ -43,21 +43,12 @@ const Pane = ({
             <button
               onClick={randomizeEvents}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isDark
-                  ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
-                  : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
+                : "bg-purple-50 text-purple-600 hover:bg-purple-100"
                 }`}
             >
               <Dice5 className="w-3.5 h-3.5" />
               Randomize
-            </button>
-            <button
-              onClick={() => setIsOpen(false)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark
-                  ? "text-white/40 hover:text-white hover:bg-white/10"
-                  : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
-                }`}
-            >
-              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -82,10 +73,10 @@ const Pane = ({
                   {/* Thumbnail */}
                   <div
                     className={`h-14 w-14 rounded-lg flex-shrink-0 overflow-hidden ${!event.thumbnail
-                        ? isDark
-                          ? "bg-white/5"
-                          : "bg-gray-100"
-                        : ""
+                      ? isDark
+                        ? "bg-white/5"
+                        : "bg-gray-100"
+                      : ""
                       }`}
                   >
                     {event.thumbnail && (
@@ -113,8 +104,8 @@ const Pane = ({
                       </span>
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded-full ${isDark
-                            ? "bg-white/10 text-white/60"
-                            : "bg-gray-100 text-gray-500"
+                          ? "bg-white/10 text-white/60"
+                          : "bg-gray-100 text-gray-500"
                           }`}
                       >
                         {event.category}

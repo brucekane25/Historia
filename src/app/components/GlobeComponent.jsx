@@ -37,9 +37,65 @@ function getCategoryColor(category) {
     return categoryColors[category?.toLowerCase()] || categoryColors.Default;
 }
 
+// ===== World Borders (GeoJSON) =====
+function WorldBorders({ isDark }) {
+    const [lines, setLines] = useState([]);
+
+    useEffect(() => {
+        fetch("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson")
+            .then((res) => res.json())
+            .then((data) => {
+                const newLines = [];
+                const radius = 1.002; // Slightly above globe surface
+
+                data.features.forEach((feature) => {
+                    const geometry = feature.geometry;
+
+                    const processPolygon = (coords) => {
+                        const points = [];
+                        coords.forEach(([lon, lat]) => {
+                            points.push(latLonToVector3(lat, lon, radius));
+                        });
+                        // Close the loop
+                        points.push(points[0]);
+                        newLines.push(points);
+                    };
+
+                    if (geometry.type === "Polygon") {
+                        geometry.coordinates.forEach((ring) => processPolygon(ring));
+                    } else if (geometry.type === "MultiPolygon") {
+                        geometry.coordinates.forEach((polygon) => {
+                            polygon.forEach((ring) => processPolygon(ring));
+                        });
+                    }
+                });
+                setLines(newLines);
+            })
+            .catch((err) => console.error("Failed to load borders:", err));
+    }, []);
+
+    const material = useMemo(
+        () =>
+            new THREE.LineBasicMaterial({
+                color: isDark ? "#4b5563" : "#9ca3af",
+                transparent: true,
+                opacity: isDark ? 0.3 : 0.4,
+            }),
+        [isDark]
+    );
+
+    return (
+        <group>
+            {lines.map((points, i) => {
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                return <line key={i} geometry={geometry} material={material} />;
+            })}
+        </group>
+    );
+}
+
 // ===== Globe with Earth Texture =====
 function Globe({ isDark }) {
-    const meshRef = useRef();
     const cloudsRef = useRef();
 
     const dayTexture = useLoader(THREE.TextureLoader, "/textures/earth-day.jpg");
@@ -47,11 +103,8 @@ function Globe({ isDark }) {
     const bumpTexture = useLoader(THREE.TextureLoader, "/textures/earth-bump.png");
 
     useFrame((_, delta) => {
-        if (meshRef.current) {
-            meshRef.current.rotation.y += delta * 0.02;
-        }
         if (cloudsRef.current) {
-            cloudsRef.current.rotation.y += delta * 0.025;
+            cloudsRef.current.rotation.y += delta * 0.005; // Independent slow cloud rotation
         }
     });
 
@@ -60,7 +113,7 @@ function Globe({ isDark }) {
     return (
         <group>
             {/* Main earth globe */}
-            <mesh ref={meshRef}>
+            <mesh>
                 <sphereGeometry args={[1, 64, 64]} />
                 <meshStandardMaterial
                     map={isDark ? nightTexture : dayTexture}
@@ -70,6 +123,9 @@ function Globe({ isDark }) {
                     roughness={isDark ? 0.9 : 0.75}
                 />
             </mesh>
+
+            {/* Country Borders */}
+            <WorldBorders isDark={isDark} />
 
             {/* Cloud layer */}
             <mesh ref={cloudsRef}>
@@ -92,187 +148,128 @@ function Globe({ isDark }) {
                     side={THREE.BackSide}
                 />
             </mesh>
-
-            {/* Outer glow */}
-            <mesh>
-                <sphereGeometry args={[1.12, 64, 64]} />
-                <meshBasicMaterial
-                    color={atmosphereColor}
-                    transparent
-                    opacity={0.025}
-                    side={THREE.BackSide}
-                />
-            </mesh>
         </group>
     );
 }
 
-// ===== Spatial Clustering =====
-function clusterEvents(events, gridSize = 12) {
-    const clusters = {};
-    events.forEach((event) => {
-        const latBin = Math.floor(event.coordinates.lat / gridSize) * gridSize;
-        const lonBin = Math.floor(event.coordinates.lon / gridSize) * gridSize;
-        const key = `${latBin}_${lonBin}`;
-        if (!clusters[key]) {
-            clusters[key] = {
-                lat: latBin + gridSize / 2,
-                lon: lonBin + gridSize / 2,
-                events: [],
-                categories: {},
-            };
+// ===== Heatmap Mesh (Peaks & Valleys) =====
+function HeatmapMesh({ events, maxPeakHeight = 0.3 }) { // maxPeakHeight scaled down for better visual
+
+    // Generate heatmap data once when events change
+    const { geometry } = useMemo(() => {
+        const width = 180; // Reduced Grid resolution W
+        const height = 90; // Reduced Grid resolution H
+        const grid = new Float32Array(width * height).fill(0);
+
+        // Populate grid
+        events.forEach(e => {
+            const x = Math.floor((e.coordinates.lon + 180) / 360 * width) % width;
+            const y = Math.floor((e.coordinates.lat + 90) / 180 * height);
+            const idx = y * width + x;
+            if (idx >= 0 && idx < grid.length) grid[idx] += 1;
+        });
+
+        // Properties for smoothing
+        const smoothedGrid = new Float32Array(width * height).fill(0);
+        const kernel = [
+            [0.05, 0.1, 0.05],
+            [0.1, 0.4, 0.1],
+            [0.05, 0.1, 0.05]
+        ];
+
+        // Blur
+        for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+                let sum = 0;
+                for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                        sum += grid[(y + ky) * width + (x + kx)] * kernel[ky + 1][kx + 1];
+                    }
+                }
+                smoothedGrid[y * width + x] = sum;
+            }
         }
-        clusters[key].events.push(event);
-        const cat = event.category || "Default";
-        clusters[key].categories[cat] = (clusters[key].categories[cat] || 0) + 1;
-    });
-    return Object.values(clusters);
-}
 
-// ===== 3D Cluster Bar =====
-function ClusterBar({ cluster, maxCount, onBarClick }) {
-    const barRef = useRef();
-    const [hovered, setHovered] = useState(false);
+        let maxVal = 0;
+        for (let i = 0; i < smoothedGrid.length; i++) maxVal = Math.max(maxVal, smoothedGrid[i]);
 
-    const position = useMemo(
-        () => latLonToVector3(cluster.lat, cluster.lon, 1.01),
-        [cluster.lat, cluster.lon]
-    );
+        // Geometry generation - Reduced segments for performance
+        const segW = 72;
+        const segH = 72;
+        const geo = new THREE.SphereGeometry(1.01, segW, segH);
+        const posAttribute = geo.attributes.position;
+        const colorAttribute = new Float32Array(posAttribute.count * 3);
+        const vertexPos = new THREE.Vector3();
 
-    // Bar height: log scale, min 0.03, max 0.25
-    const height = useMemo(() => {
-        const normalized = Math.log(cluster.events.length + 1) / Math.log(maxCount + 1);
-        return 0.03 + normalized * 0.22;
-    }, [cluster.events.length, maxCount]);
+        // Colors
+        const colorLow = new THREE.Color("#3b82f6");
+        const colorMid = new THREE.Color("#10b981");
+        const colorHigh = new THREE.Color("#ef4444");
 
-    // Dominant category color
-    const color = useMemo(() => {
-        const dominant = Object.entries(cluster.categories).sort(
-            (a, b) => b[1] - a[1]
-        )[0];
-        return getCategoryColor(dominant[0]);
-    }, [cluster.categories]);
+        for (let i = 0; i < posAttribute.count; i++) {
+            vertexPos.set(posAttribute.getX(i), posAttribute.getY(i), posAttribute.getZ(i));
 
-    // Orient bar to point outward from globe center
-    const lookAt = useMemo(() => {
-        const dir = position.clone().normalize();
-        return new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0),
-            dir
-        );
-    }, [position]);
+            const normalized = vertexPos.clone().normalize();
+            const u = 0.5 + Math.atan2(normalized.z, normalized.x) / (2 * Math.PI);
+            const v = 0.5 - Math.asin(normalized.y) / Math.PI;
 
-    useFrame((_, delta) => {
-        if (barRef.current) {
-            const targetScale = hovered ? 1.3 : 1;
-            barRef.current.scale.lerp(
-                new THREE.Vector3(targetScale, targetScale, targetScale),
-                delta * 8
-            );
+            // Sample grid
+            const gx = Math.floor(u * width) % width;
+            const gy = Math.floor(v * height);
+            const idx = gy * width + gx;
+            const val = smoothedGrid[idx] || 0;
+            const intensity = maxVal > 0 ? Math.min(val / (maxVal * 0.6), 1) : 0;
+
+            // Displace
+            if (intensity > 0.05) {
+                const displacement = intensity * maxPeakHeight;
+                const newPos = vertexPos.add(normalized.multiplyScalar(displacement));
+                posAttribute.setXYZ(i, newPos.x, newPos.y, newPos.z);
+            }
+
+            // Color
+            const color = new THREE.Color();
+            if (intensity < 0.05) {
+                color.setHex(0x000000);
+            } else if (intensity < 0.5) {
+                color.lerpColors(colorLow, colorMid, intensity * 2);
+            } else {
+                color.lerpColors(colorMid, colorHigh, (intensity - 0.5) * 2);
+            }
+
+            colorAttribute[i * 3] = color.r;
+            colorAttribute[i * 3 + 1] = color.g;
+            colorAttribute[i * 3 + 2] = color.b;
         }
-    });
 
-    return (
-        <group position={position} quaternion={lookAt}>
-            {/* Bar cylinder */}
-            <mesh
-                ref={barRef}
-                position={[0, height / 2, 0]}
-                onPointerOver={(e) => {
-                    e.stopPropagation();
-                    setHovered(true);
-                    document.body.style.cursor = "pointer";
-                }}
-                onPointerOut={() => {
-                    setHovered(false);
-                    document.body.style.cursor = "auto";
-                }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onBarClick(cluster);
-                }}
-            >
-                <cylinderGeometry args={[0.012, 0.018, height, 8]} />
-                <meshStandardMaterial
-                    color={color}
-                    transparent
-                    opacity={hovered ? 0.95 : 0.8}
-                    emissive={color}
-                    emissiveIntensity={hovered ? 0.4 : 0.15}
-                />
-            </mesh>
+        geo.setAttribute('color', new THREE.BufferAttribute(colorAttribute, 3));
+        return { geometry: geo };
 
-            {/* Top cap glow */}
-            <mesh position={[0, height, 0]}>
-                <sphereGeometry args={[0.015, 8, 8]} />
-                <meshBasicMaterial color={color} transparent opacity={0.6} />
-            </mesh>
+    }, [events, maxPeakHeight]);
 
-            {/* Hover tooltip */}
-            {hovered && (
-                <Html
-                    position={[0, height + 0.06, 0]}
-                    center
-                    distanceFactor={3}
-                    style={{ pointerEvents: "none" }}
-                >
-                    <div
-                        className="px-3 py-2 rounded-lg shadow-xl text-center"
-                        style={{
-                            background: "rgba(15,17,30,0.92)",
-                            backdropFilter: "blur(12px)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            minWidth: "120px",
-                        }}
-                    >
-                        <p className="text-sm font-bold text-white">
-                            {cluster.events.length}
-                        </p>
-                        <p className="text-[10px] text-white/50">events</p>
-                        <div className="flex flex-wrap gap-1 mt-1.5 justify-center">
-                            {Object.entries(cluster.categories)
-                                .sort((a, b) => b[1] - a[1])
-                                .slice(0, 3)
-                                .map(([cat, count]) => (
-                                    <span
-                                        key={cat}
-                                        className="text-[9px] px-1.5 py-0.5 rounded-full text-white/80"
-                                        style={{ backgroundColor: getCategoryColor(cat) + "40" }}
-                                    >
-                                        {cat} ({count})
-                                    </span>
-                                ))}
-                        </div>
-                    </div>
-                </Html>
-            )}
-        </group>
-    );
+    // Custom shader material for transparency modulation
+    const material = useMemo(() => {
+        return new THREE.MeshBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+        });
+    }, []);
+
+    // Cleanup memory
+    useEffect(() => {
+        return () => {
+            geometry.dispose();
+            material.dispose();
+        };
+    }, [geometry, material]);
+
+    return <mesh geometry={geometry} material={material} />;
 }
 
-// ===== Cluster Bars Group =====
-function ClusterBars({ events, onBarClick }) {
-    const clusters = useMemo(() => clusterEvents(events, 15), [events]);
-    const maxCount = useMemo(
-        () => Math.max(...clusters.map((c) => c.events.length), 1),
-        [clusters]
-    );
-
-    return (
-        <group>
-            {clusters
-                .filter((c) => c.events.length >= 2)
-                .map((cluster, i) => (
-                    <ClusterBar
-                        key={`${cluster.lat}_${cluster.lon}`}
-                        cluster={cluster}
-                        maxCount={maxCount}
-                        onBarClick={onBarClick}
-                    />
-                ))}
-        </group>
-    );
-}
 
 // ===== Individual Event Pin =====
 function EventPin({ event, onPinClick, isSelected }) {
@@ -456,8 +453,8 @@ function EventDetail({ event, isDark, onClose }) {
                 <button
                     onClick={onClose}
                     className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs ${isDark
-                            ? "bg-white/10 text-white hover:bg-white/20"
-                            : "bg-black/10 text-black hover:bg-black/20"
+                        ? "bg-white/10 text-white hover:bg-white/20"
+                        : "bg-black/10 text-black hover:bg-black/20"
                         } transition-colors`}
                 >
                     ✕
@@ -516,11 +513,36 @@ function CategoryLegend({ isDark }) {
     );
 }
 
+// ===== Common Rotation Group =====
+function RotatingGlobeGroup({ children }) {
+    const groupRef = useRef();
+
+    useFrame((_, delta) => {
+        if (groupRef.current) {
+            groupRef.current.rotation.y += delta * 0.02;
+        }
+    });
+
+    return <group ref={groupRef}>{children}</group>;
+}
+
+// Helper for pausing rotation
+function RotatingGlobeGroupWithPause({ children, paused }) {
+    const groupRef = useRef();
+    useFrame((_, delta) => {
+        if (groupRef.current && !paused) {
+            groupRef.current.rotation.y += delta * 0.02;
+        }
+    });
+
+    return <group ref={groupRef}>{children}</group>;
+}
+
 // ===== Main Globe Component =====
 const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
     const isDark = !mode;
     const [localSelected, setLocalSelected] = useState(null);
-    const [showBars, setShowBars] = useState(true);
+    const [showHeatmap, setShowHeatmap] = useState(false); // Default: Pins (false)
 
     const activeEvent = selectedEvent || localSelected;
 
@@ -530,20 +552,6 @@ const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
             if (onEventSelect) onEventSelect(event);
         },
         [onEventSelect]
-    );
-
-    const handleBarClick = useCallback(
-        (cluster) => {
-            // Select the first event in the cluster as a representative
-            if (cluster.events.length === 1) {
-                handlePinClick(cluster.events[0]);
-            } else {
-                // Could zoom in; for now select the most notable event
-                const representative = cluster.events[0];
-                handlePinClick(representative);
-            }
-        },
-        [handlePinClick]
     );
 
     const handleClose = useCallback(() => {
@@ -586,31 +594,32 @@ const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
                     />
                 )}
 
-                {/* Globe with texture */}
-                <Globe isDark={isDark} />
+                {/* ROTATING GROUP */}
+                <RotatingGlobeGroupWithPause paused={!!activeEvent}>
+                    <Globe isDark={isDark} />
 
-                {/* 3D Bar Clusters */}
-                {showBars && (
-                    <ClusterBars events={events} onBarClick={handleBarClick} />
-                )}
+                    {/* Render Heatmap OR Pins */}
+                    {showHeatmap && (
+                        <HeatmapMesh events={events} />
+                    )}
 
-                {/* Individual Event Pins */}
-                {!showBars && (
-                    <EventPins
-                        events={events}
-                        onPinClick={handlePinClick}
-                        selectedEvent={activeEvent}
-                    />
-                )}
+                    {!showHeatmap && (
+                        <EventPins
+                            events={events}
+                            onPinClick={handlePinClick}
+                            selectedEvent={activeEvent}
+                        />
+                    )}
 
-                {/* Selected Event Detail */}
-                {activeEvent && (
-                    <EventDetail
-                        event={activeEvent}
-                        isDark={isDark}
-                        onClose={handleClose}
-                    />
-                )}
+                    {activeEvent && !showHeatmap && (
+                        <EventDetail
+                            event={activeEvent}
+                            isDark={isDark}
+                            onClose={handleClose}
+                        />
+                    )}
+                </RotatingGlobeGroupWithPause>
+
 
                 {/* Controls */}
                 <OrbitControls
@@ -620,21 +629,20 @@ const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
                     maxDistance={5}
                     rotateSpeed={0.5}
                     zoomSpeed={0.8}
-                    autoRotate={!activeEvent}
-                    autoRotateSpeed={0.3}
+                    autoRotate={false}
                 />
             </Canvas>
 
             {/* Category Legend */}
             <CategoryLegend isDark={isDark} />
 
-            {/* View toggle: Bars vs Pins */}
+            {/* View toggle: Heatmap vs Pins */}
             <div className="absolute top-4 left-4 z-10">
                 <button
-                    onClick={() => setShowBars(!showBars)}
+                    onClick={() => setShowHeatmap(!showHeatmap)}
                     className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${isDark
-                            ? "glass-dark text-white/70 hover:text-white"
-                            : "glass text-gray-600 hover:text-gray-900"
+                        ? "glass-dark text-white/70 hover:text-white"
+                        : "glass text-gray-600 hover:text-gray-900"
                         }`}
                     style={{
                         border: isDark
@@ -642,7 +650,7 @@ const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
                             : "1px solid rgba(0,0,0,0.06)",
                     }}
                 >
-                    {showBars ? "📍 Show Pins" : "📊 Show Clusters"}
+                    {showHeatmap ? "📍 Show Pins" : "🌋 Show Density Peaks"}
                 </button>
             </div>
 
@@ -652,8 +660,7 @@ const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
                     className={`text-xs px-4 py-2 rounded-full ${isDark ? "glass-dark text-white/40" : "glass text-black/40"
                         }`}
                 >
-                    Drag to rotate · Scroll to zoom · Click{" "}
-                    {showBars ? "bars" : "pins"} to explore
+                    Drag to rotate · Scroll to zoom · {showHeatmap ? "Explore density peaks" : "Click pins to explore"}
                 </p>
             </div>
         </div>

@@ -12,7 +12,6 @@ import {
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import { GeoJSON } from "react-leaflet";
 import india_outline from "../assets/India_Outline_Map.js";
-import Image from "next/image.js";
 
 const MapComponent = ({ events, selectedEvent, mode }) => {
   const isDark = !mode;
@@ -146,12 +145,13 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
               >
                 <div className="flex flex-row gap-4">
                   {event.thumbnail && (
-                    <Image
-                      width={160}
-                      height={160}
-                      className="object-cover rounded-lg flex-shrink-0"
+                    <img
                       src={event.thumbnail}
                       alt={event.title || "Event Thumbnail"}
+                      className="w-40 h-40 object-cover rounded-lg flex-shrink-0"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
                     />
                   )}
 
@@ -181,8 +181,8 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark
-                            ? "bg-white/10 text-white/70"
-                            : "bg-gray-100 text-gray-600"
+                          ? "bg-white/10 text-white/70"
+                          : "bg-gray-100 text-gray-600"
                           }`}
                       >
                         {event.category}

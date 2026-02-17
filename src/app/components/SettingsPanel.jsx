@@ -6,6 +6,8 @@ import RightSliders from "./RightSliders";
 import CategoryDropdown from "./CategoryDropdown";
 import { X, Filter, Sliders, BarChart3, HelpCircle } from "lucide-react";
 
+import { motion, useDragControls } from "framer-motion";
+
 export default function SettingsPanel({
   isDesktop,
   mode,
@@ -27,6 +29,7 @@ export default function SettingsPanel({
   onShowTutorial,
 }) {
   const isDark = !mode;
+  const controls = useDragControls();
 
   const handleClearFilters = () => {
     setYearRange({ startYear: -3000, endYear: 2024 });
@@ -35,7 +38,12 @@ export default function SettingsPanel({
   };
 
   return (
-    <div
+    <motion.div
+      drag
+      dragListener={false}
+      dragControls={controls}
+      dragMomentum={false}
+      whileDrag={{ scale: 1.02 }}
       className={`rounded-2xl shadow-2xl ${isDesktop ? "p-5" : "py-3 px-4 min-w-[97vw] overflow-scroll"
         } max-w-[550px] ${isDark ? "glass-dark" : "glass"}`}
       style={{
@@ -46,20 +54,23 @@ export default function SettingsPanel({
       }}
     >
       {/* Header */}
-      <header className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+      <header
+        className="flex items-center justify-between mb-4 cursor-move"
+        onPointerDown={(e) => controls.start(e)}
+      >
+        <div className="flex items-center gap-2 pointer-events-none">
           <Sliders
             className={`w-5 h-5 ${isDark ? "text-purple-400" : "text-purple-600"
               }`}
           />
           <h2 className="text-xl font-semibold">Tweaks</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
           <button
             onClick={handleClearFilters}
             className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${isDark
-                ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-                : "bg-black/5 text-gray-500 hover:bg-black/10 hover:text-gray-900"
+              ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+              : "bg-black/5 text-gray-500 hover:bg-black/10 hover:text-gray-900"
               }`}
           >
             Clear Filters
@@ -67,8 +78,8 @@ export default function SettingsPanel({
           <button
             onClick={() => setsettings(false)}
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark
-                ? "text-white/40 hover:text-white hover:bg-white/10"
-                : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+              ? "text-white/40 hover:text-white hover:bg-white/10"
+              : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
               }`}
           >
             <X className="w-4 h-4" />
@@ -131,8 +142,8 @@ export default function SettingsPanel({
             variant="ghost"
             onClick={onShowTutorial}
             className={`w-full justify-start gap-2 h-9 text-xs font-normal ${isDark
-                ? "text-white/40 hover:text-white hover:bg-white/5"
-                : "text-gray-500 hover:text-gray-900 hover:bg-black/5"
+              ? "text-white/40 hover:text-white hover:bg-white/5"
+              : "text-gray-500 hover:text-gray-900 hover:bg-black/5"
               }`}
           >
             <HelpCircle className="w-3.5 h-3.5" />
@@ -140,7 +151,7 @@ export default function SettingsPanel({
           </Button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

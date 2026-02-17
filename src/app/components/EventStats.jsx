@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { X, BarChart3, TrendingUp, Calendar } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 
 const categoryColors = {
     war: "#ef4444",
@@ -22,6 +22,7 @@ const categoryColors = {
 
 const EventStats = ({ events, isOpen, onClose, mode }) => {
     const isDark = !mode;
+    const controls = useDragControls();
 
     // Category distribution
     const categoryData = useMemo(() => {
@@ -68,6 +69,11 @@ const EventStats = ({ events, isOpen, onClose, mode }) => {
         <AnimatePresence>
             {isOpen && (
                 <motion.div
+                    drag
+                    dragListener={false}
+                    dragControls={controls}
+                    dragMomentum={false}
+                    whileDrag={{ scale: 1.02 }}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
@@ -82,8 +88,11 @@ const EventStats = ({ events, isOpen, onClose, mode }) => {
                     }}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
+                    <div
+                        className="flex items-center justify-between mb-4 cursor-move"
+                        onPointerDown={(e) => controls.start(e)}
+                    >
+                        <div className="flex items-center gap-2 pointer-events-none">
                             <BarChart3
                                 className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"
                                     }`}
@@ -92,9 +101,10 @@ const EventStats = ({ events, isOpen, onClose, mode }) => {
                         </div>
                         <button
                             onClick={onClose}
+                            onPointerDown={(e) => e.stopPropagation()}
                             className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isDark
-                                    ? "text-white/40 hover:text-white hover:bg-white/10"
-                                    : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+                                ? "text-white/40 hover:text-white hover:bg-white/10"
+                                : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
                                 }`}
                         >
                             <X className="w-3.5 h-3.5" />
