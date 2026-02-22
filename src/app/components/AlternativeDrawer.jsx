@@ -14,15 +14,15 @@ const AlternativeDrawer = ({
   events,
   randomizeEvents,
   onEventClick,
-  mode,
+  lightMode,
 }) => {
-  const isDark = !mode;
+  const isDark = !lightMode;
 
   return (
     <Sheet open={isSlider} onOpenChange={setIsSlider}>
       <SheetContent
         side="bottom"
-        className="max-h-[70vh] z-[999] min-w-[320px] overflow-auto border-0"
+        className="max-h-[70vh] z-[1020] min-w-[320px] overflow-auto border-0"
         style={{
           backgroundColor: isDark
             ? "rgba(15,17,30,0.95)"
@@ -46,8 +46,8 @@ const AlternativeDrawer = ({
               <button
                 onClick={randomizeEvents}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isDark
-                    ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
-                    : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                  ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
+                  : "bg-purple-50 text-purple-600 hover:bg-purple-100"
                   }`}
               >
                 <Dice5 className="w-3.5 h-3.5" />
@@ -104,8 +104,8 @@ const AlternativeDrawer = ({
                     </span>
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full ${isDark
-                          ? "bg-white/10 text-white/60"
-                          : "bg-gray-100 text-gray-500"
+                        ? "bg-white/10 text-white/60"
+                        : "bg-gray-100 text-gray-500"
                         }`}
                     >
                       {event.category}

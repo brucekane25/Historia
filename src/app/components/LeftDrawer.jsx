@@ -2,25 +2,27 @@
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import EventTimeline from "./EventTimeline";
 import { X } from "lucide-react";
 
 const LeftDrawer = ({
   isDesktop,
-  isLeftOpen,
-  setisLeftOpen,
+  leftOpen,
+  setLeftOpen,
   events,
   onEventClick,
-  mode,
+  lightMode,
 }) => {
-  const isDark = !mode;
+  const isDark = !lightMode;
 
   return (
-    <Sheet open={isLeftOpen} onOpenChange={setisLeftOpen}>
+    <Sheet open={leftOpen} onOpenChange={setLeftOpen}>
       <SheetContent
         side="left"
-        className="p-0 border-0"
+        className="p-0 border-0 z-[1020]"
         style={{
           minWidth: isDesktop ? "330px" : "290px",
           maxWidth: isDesktop ? "30vw" : "85vw",
@@ -43,24 +45,24 @@ const LeftDrawer = ({
             : "1px solid rgba(0,0,0,0.06)",
         }}
       >
-        <div className="flex items-center justify-between px-4 pt-4 pb-3">
-          <h2 className="text-lg font-semibold">Timeline</h2>
+        <SheetHeader className="flex flex-row items-center justify-between px-4 pt-4 pb-3">
+          <SheetTitle className="text-lg font-semibold" style={{ color: isDark ? "#e5e7eb" : "#111827" }}>Timeline</SheetTitle>
           <button
-            onClick={() => setisLeftOpen(false)}
+            onClick={() => setLeftOpen(false)}
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark
-                ? "text-white/40 hover:text-white hover:bg-white/10"
-                : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+              ? "text-white/40 hover:text-white hover:bg-white/10"
+              : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
               }`}
           >
             <X className="w-4 h-4" />
           </button>
-        </div>
+        </SheetHeader>
         <div>
           <EventTimeline
-            mode={mode}
+            lightMode={lightMode}
             events={events}
-            isLeftOpen={isLeftOpen}
-            setisLeftOpen={setisLeftOpen}
+            leftOpen={leftOpen}
+            setLeftOpen={setLeftOpen}
             onEventClick={onEventClick}
           />
         </div>

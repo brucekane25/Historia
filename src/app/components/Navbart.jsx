@@ -7,15 +7,16 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Navbart = ({
   setSelectedEvent,
-  isLeftOpen,
-  setisLeftOpen,
-  mode,
-  setmode,
+  leftOpen,
+  setLeftOpen,
+  lightMode,
+  setLightMode,
   viewMode,
   setViewMode,
   events,
+  setCountry,
 }) => {
-  const isDark = !mode;
+  const isDark = !lightMode;
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef(null);
@@ -51,12 +52,12 @@ const Navbart = ({
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[95%] max-w-[900px]"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[1000] w-[95%] max-w-[900px]"
     >
       <div
         className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-2xl ${isDark
-            ? "glass-dark shadow-purple-500/5"
-            : "glass shadow-black/10"
+          ? "glass-dark shadow-purple-500/5"
+          : "glass shadow-black/10"
           }`}
         style={{
           border: isDark
@@ -68,8 +69,8 @@ const Navbart = ({
         <div className="flex items-center gap-2 flex-shrink-0">
           <div
             className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark
-                ? "bg-purple-500/20 text-purple-300"
-                : "bg-purple-100 text-purple-600"
+              ? "bg-purple-500/20 text-purple-300"
+              : "bg-purple-100 text-purple-600"
               }`}
           >
             <Globe className="w-4 h-4" />
@@ -82,11 +83,11 @@ const Navbart = ({
           </span>
           <span
             className={`text-[9px] px-1.5 py-0.5 rounded-full hidden sm:block ${isDark
-                ? "bg-white/5 text-white/30"
-                : "bg-black/5 text-gray-400"
+              ? "bg-white/5 text-white/30"
+              : "bg-black/5 text-gray-400"
               }`}
           >
-            v2
+            v3
           </span>
         </div>
 
@@ -107,8 +108,8 @@ const Navbart = ({
               }}
               onFocus={() => setShowResults(true)}
               className={`w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border-0 outline-none transition-colors ${isDark
-                  ? "bg-white/5 text-white placeholder:text-white/25 focus:bg-white/10"
-                  : "bg-black/5 text-gray-900 placeholder:text-gray-400 focus:bg-black/8"
+                ? "bg-white/5 text-white placeholder:text-white/25 focus:bg-white/10"
+                : "bg-black/5 text-gray-900 placeholder:text-gray-400 focus:bg-black/8"
                 }`}
             />
             {searchQuery && (
@@ -133,7 +134,7 @@ const Navbart = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full mt-2 left-0 right-0 rounded-xl shadow-2xl overflow-hidden z-50"
+                className="absolute top-full mt-2 left-0 right-0 rounded-xl shadow-2xl overflow-hidden z-[1050]"
                 style={{
                   background: isDark
                     ? "rgba(15,17,30,0.97)"
@@ -150,8 +151,8 @@ const Navbart = ({
                       key={event._id}
                       onClick={() => handleResultClick(event)}
                       className={`w-full text-left px-3 py-2 flex items-center gap-2.5 transition-colors ${isDark
-                          ? "hover:bg-white/5"
-                          : "hover:bg-black/3"
+                        ? "hover:bg-white/5"
+                        : "hover:bg-black/3"
                         }`}
                     >
                       {event.thumbnail && (
@@ -195,8 +196,8 @@ const Navbart = ({
         <button
           onClick={() => setViewMode(viewMode === "map" ? "globe" : "map")}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isDark
-              ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-              : "bg-black/5 text-gray-600 hover:bg-black/10 hover:text-gray-900"
+            ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+            : "bg-black/5 text-gray-600 hover:bg-black/10 hover:text-gray-900"
             }`}
         >
           {viewMode === "map" ? (
@@ -216,8 +217,8 @@ const Navbart = ({
           target="_blank"
           rel="noopener noreferrer"
           className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isDark
-              ? "text-white/40 hover:text-white hover:bg-white/10"
-              : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+            ? "text-white/40 hover:text-white hover:bg-white/10"
+            : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
             }`}
         >
           <Github className="w-4 h-4" />

@@ -1,5 +1,6 @@
 import 'leaflet/dist/leaflet.css';
 import 'react-leaflet-markercluster/styles';
+import './globals.css';
 
 export const metadata = {
   title: "Gloria — Explore History on a Globe",

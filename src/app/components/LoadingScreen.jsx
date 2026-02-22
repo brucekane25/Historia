@@ -2,13 +2,14 @@
 import { motion } from "framer-motion";
 import { Globe } from "lucide-react";
 
-const LoadingScreen = ({ isDark }) => {
+const LoadingScreen = ({ lightMode }) => {
+    const isDark = !lightMode;
     return (
         <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
-            className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center ${isDark ? "bg-[#0a0c1a]" : "bg-[#f0f2f7]"
+            className={`fixed inset-0 z-[1050] flex flex-col items-center justify-center ${isDark ? "bg-[#0a0c1a]" : "bg-[#f0f2f7]"
                 }`}
         >
             {/* Animated Globe */}

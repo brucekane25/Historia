@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sparkles, X } from "lucide-react";
 
-const LATEST_VERSION = "2.0.0";
+const LATEST_VERSION = "3.0.0";
 
 const WhatsNew = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,41 +29,46 @@ const WhatsNew = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white">
+      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white z-[1040]">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-400" />
             <DialogTitle className="text-lg font-bold text-white">
-              What's New in Gloria v2
+              What&apos;s New in Gloria v3
             </DialogTitle>
           </div>
         </DialogHeader>
 
         <div className="py-2">
           <p className="text-sm text-white/50 mb-4">
-            Here's what we've been working on:
+            Here&apos;s what&apos;s new:
           </p>
           <ul className="space-y-2.5">
             {[
               {
-                emoji: "🌍",
-                title: "3D Globe View",
-                desc: "Explore events on an interactive Three.js globe",
+                emoji: "⭐",
+                title: "Bookmarked Events",
+                desc: "Save your favorite events and access them anytime",
               },
               {
-                emoji: "✨",
-                title: "Complete UI Redesign",
-                desc: "Glassmorphic design with smooth animations",
+                emoji: "📅",
+                title: "On This Day",
+                desc: "Discover what happened on today's date throughout history",
               },
               {
-                emoji: "🌙",
-                title: "Enhanced Dark Mode",
-                desc: "Refined dark theme across all components",
+                emoji: "🔍",
+                title: "Event Detail Modal",
+                desc: "Rich event details with Wikipedia links and quick actions",
               },
               {
-                emoji: "🎯",
-                title: "Better Navigation",
-                desc: "Floating toolbar, horizontal scrolling cards, and more",
+                emoji: "⌨️",
+                title: "Command Palette",
+                desc: "Press ⌘K to search events and access quick actions",
+              },
+              {
+                emoji: "🔗",
+                title: "Share Events",
+                desc: "Copy a link to any event and share it with others",
               },
             ].map((item, i) => (
               <li

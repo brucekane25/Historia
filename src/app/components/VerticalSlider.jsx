@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 
-const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, mode }) => {
-  const isDark = !mode;
+const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) => {
+  const isDark = !lightMode;
   const [temporaryRange, setTemporaryRange] = useState([
     yearRange.startYear,
     yearRange.endYear,
@@ -65,8 +65,8 @@ const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, mode }) => 
             max={2024}
             step={1}
             className={`w-16 text-center text-xs font-mono mb-2 rounded-lg border ${isDark
-                ? "bg-white/5 border-white/10 text-white"
-                : "bg-black/5 border-black/10 text-gray-900"
+              ? "bg-white/5 border-white/10 text-white"
+              : "bg-black/5 border-black/10 text-gray-900"
               }`}
           />
           <Slider
@@ -88,8 +88,8 @@ const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, mode }) => 
             max={2024}
             step={1}
             className={`w-16 text-center text-xs font-mono mt-2 rounded-lg border ${isDark
-                ? "bg-white/5 border-white/10 text-white"
-                : "bg-black/5 border-black/10 text-gray-900"
+              ? "bg-white/5 border-white/10 text-white"
+              : "bg-black/5 border-black/10 text-gray-900"
               }`}
           />
           <p className={`text-[10px] mt-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>

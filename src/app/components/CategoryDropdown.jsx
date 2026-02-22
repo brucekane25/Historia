@@ -19,7 +19,7 @@ import {
   AppWindow as CategoryIcon,
 } from "lucide-react";
 
-const CategoryDropdown = ({ onCategoryChange, clr, mode, selectedCategories, setSelectedCategories }) => {
+const CategoryDropdown = ({ onCategoryChange, clr, lightMode, selectedCategories, setSelectedCategories }) => {
   const categories = [
     { value: "selected", label: "Selected", icon: <SearchIcon /> },
     { value: "births", label: "Births", icon: <CakeIcon /> },
@@ -59,7 +59,7 @@ const CategoryDropdown = ({ onCategoryChange, clr, mode, selectedCategories, set
         <Chip
           key={category.value}
           onClick={() => handleCategorySelect(category.value)}
-          variant={selectedCategories.includes(category.value) ? (mode ? "success" : "destructive") : "default"}
+          variant={selectedCategories.includes(category.value) ? (lightMode ? "success" : "destructive") : "default"}
           className="cursor-pointer"
         >
           {category.icon}

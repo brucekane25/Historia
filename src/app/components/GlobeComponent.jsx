@@ -382,87 +382,7 @@ function EventPins({ events, onPinClick, selectedEvent }) {
     );
 }
 
-// ===== Event Detail Card =====
-function EventDetail({ event, isDark, onClose }) {
-    if (!event) return null;
 
-    const position = latLonToVector3(
-        event.coordinates.lat,
-        event.coordinates.lon,
-        1.2
-    );
-
-    return (
-        <Html position={position} center distanceFactor={3.5}>
-            <div
-                className="rounded-xl shadow-2xl overflow-hidden animate-fade-in-up"
-                style={{
-                    background: isDark
-                        ? "rgba(15,17,30,0.95)"
-                        : "rgba(255,255,255,0.95)",
-                    backdropFilter: "blur(20px)",
-                    border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)"
-                        }`,
-                    minWidth: "280px",
-                    maxWidth: "340px",
-                }}
-            >
-                <div className="flex gap-3 p-4">
-                    {event.thumbnail && (
-                        <img
-                            src={event.thumbnail}
-                            alt={event.title}
-                            className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                        />
-                    )}
-                    <div className="flex flex-col justify-between flex-grow min-w-0">
-                        <div>
-                            <h3
-                                className={`text-sm font-semibold leading-tight line-clamp-3 ${isDark ? "text-white" : "text-gray-900"
-                                    }`}
-                            >
-                                {event.title}
-                            </h3>
-                            <a
-                                href={`https://en.wikipedia.org/?curid=${event.pageID}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-purple-400 hover:text-purple-300 text-xs mt-1 inline-block"
-                            >
-                                Read on Wikipedia →
-                            </a>
-                        </div>
-                        <div className="flex justify-between items-center mt-2">
-                            <span
-                                className={`text-lg font-bold ${isDark ? "text-purple-400" : "text-purple-600"
-                                    }`}
-                            >
-                                {event.year}
-                            </span>
-                            <span
-                                className="text-[10px] px-2 py-0.5 rounded-full font-medium text-white"
-                                style={{
-                                    backgroundColor: getCategoryColor(event.category),
-                                }}
-                            >
-                                {event.category}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <button
-                    onClick={onClose}
-                    className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs ${isDark
-                        ? "bg-white/10 text-white hover:bg-white/20"
-                        : "bg-black/10 text-black hover:bg-black/20"
-                        } transition-colors`}
-                >
-                    ✕
-                </button>
-            </div>
-        </Html>
-    );
-}
 
 // ===== Category Legend =====
 function CategoryLegend({ isDark }) {
@@ -479,7 +399,7 @@ function CategoryLegend({ isDark }) {
 
     return (
         <div
-            className={`absolute top-4 right-4 z-10 p-3 rounded-xl ${isDark ? "glass-dark" : "glass"
+            className={`absolute top-4 right-4 z-[1010] p-3 rounded-xl ${isDark ? "glass-dark" : "glass"
                 }`}
             style={{
                 border: isDark
@@ -539,23 +459,20 @@ function RotatingGlobeGroupWithPause({ children, paused }) {
 }
 
 // ===== Main Globe Component =====
-const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
-    const isDark = !mode;
-    const [localSelected, setLocalSelected] = useState(null);
+const GlobeComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
+    const isDark = !lightMode;
     const [showHeatmap, setShowHeatmap] = useState(false); // Default: Pins (false)
 
-    const activeEvent = selectedEvent || localSelected;
+    const activeEvent = selectedEvent;
 
     const handlePinClick = useCallback(
         (event) => {
-            setLocalSelected(event);
             if (onEventSelect) onEventSelect(event);
         },
         [onEventSelect]
     );
 
     const handleClose = useCallback(() => {
-        setLocalSelected(null);
         if (onEventSelect) onEventSelect(null);
     }, [onEventSelect]);
 
@@ -611,13 +528,7 @@ const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
                         />
                     )}
 
-                    {activeEvent && !showHeatmap && (
-                        <EventDetail
-                            event={activeEvent}
-                            isDark={isDark}
-                            onClose={handleClose}
-                        />
-                    )}
+
                 </RotatingGlobeGroupWithPause>
 
 
@@ -637,7 +548,7 @@ const GlobeComponent = ({ events, selectedEvent, mode, onEventSelect }) => {
             <CategoryLegend isDark={isDark} />
 
             {/* View toggle: Heatmap vs Pins */}
-            <div className="absolute top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 z-[1010]">
                 <button
                     onClick={() => setShowHeatmap(!showHeatmap)}
                     className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${isDark

@@ -20,8 +20,8 @@ const categoryColors = {
     environmental: "#22c55e",
 };
 
-const EventStats = ({ events, isOpen, onClose, mode }) => {
-    const isDark = !mode;
+const EventStats = ({ events, isOpen, onClose, lightMode }) => {
+    const isDark = !lightMode;
     const controls = useDragControls();
 
     // Category distribution

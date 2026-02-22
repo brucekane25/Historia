@@ -10,14 +10,14 @@ import { motion, useDragControls } from "framer-motion";
 
 export default function SettingsPanel({
   isDesktop,
-  mode,
+  lightMode,
   country,
   selectedCategory,
   setSelectedCategory,
   setSelectedEvent,
   setYearRange,
-  setsettings,
-  setcountry,
+  setSettingsOpen,
+  setCountry,
   yearRange,
   pages,
   currentPage,
@@ -28,13 +28,13 @@ export default function SettingsPanel({
   totalEvents,
   onShowTutorial,
 }) {
-  const isDark = !mode;
+  const isDark = !lightMode;
   const controls = useDragControls();
 
   const handleClearFilters = () => {
     setYearRange({ startYear: -3000, endYear: 2024 });
     setSelectedCategory([]);
-    setcountry("");
+    setCountry("");
   };
 
   return (
@@ -76,7 +76,7 @@ export default function SettingsPanel({
             Clear Filters
           </button>
           <button
-            onClick={() => setsettings(false)}
+            onClick={() => setSettingsOpen(false)}
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isDark
               ? "text-white/40 hover:text-white hover:bg-white/10"
               : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
@@ -98,7 +98,7 @@ export default function SettingsPanel({
           <CategoryDropdown
             onCategoryChange={setSelectedCategory}
             clr={setSelectedEvent}
-            mode={mode}
+            lightMode={lightMode}
             selectedCategories={selectedCategory}
             setSelectedCategories={setSelectedCategory}
           />
@@ -114,7 +114,7 @@ export default function SettingsPanel({
             setSelectedEvent={setSelectedEvent}
             yearRange={yearRange}
             setYearRange={setYearRange}
-            mode={mode}
+            lightMode={lightMode}
           />
         </SettingsSection>
 
@@ -126,7 +126,7 @@ export default function SettingsPanel({
         >
           <RightSliders
             setLimit={setLimit}
-            mode={mode}
+            lightMode={lightMode}
             pages={pages}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}

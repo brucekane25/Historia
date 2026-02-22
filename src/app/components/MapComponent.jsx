@@ -13,8 +13,8 @@ import MarkerClusterGroup from "react-leaflet-markercluster";
 import { GeoJSON } from "react-leaflet";
 import india_outline from "../assets/India_Outline_Map.js";
 
-const MapComponent = ({ events, selectedEvent, mode }) => {
-  const isDark = !mode;
+const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
+  const isDark = !lightMode;
 
   const customIcon = L.icon({
     iconUrl: "/marker-icon.png",
@@ -124,75 +124,15 @@ const MapComponent = ({ events, selectedEvent, mode }) => {
             key={event._id}
             icon={customIcon}
             position={[event.coordinates.lat, event.coordinates.lon]}
+            eventHandlers={{
+              click: () => onEventSelect(event)
+            }}
             ref={(marker) => {
               if (marker) {
                 markersRef.current[event._id] = marker;
               }
             }}
-          >
-            <Popup>
-              <div
-                className="min-w-[370px] max-w-2xl p-4 rounded-xl shadow-2xl"
-                style={{
-                  background: isDark
-                    ? "rgba(15,17,30,0.95)"
-                    : "rgba(255,255,255,0.95)",
-                  backdropFilter: "blur(20px)",
-                  border: isDark
-                    ? "1px solid rgba(255,255,255,0.08)"
-                    : "1px solid rgba(0,0,0,0.06)",
-                }}
-              >
-                <div className="flex flex-row gap-4">
-                  {event.thumbnail && (
-                    <img
-                      src={event.thumbnail}
-                      alt={event.title || "Event Thumbnail"}
-                      className="w-40 h-40 object-cover rounded-lg flex-shrink-0"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  )}
-
-                  <div className="flex flex-col justify-between gap-2 flex-grow">
-                    <div>
-                      <h3
-                        className={`text-sm font-medium leading-snug line-clamp-4 ${isDark ? "text-white" : "text-gray-900"
-                          }`}
-                      >
-                        {event.title}
-                      </h3>
-                      <a
-                        href={`https://en.wikipedia.org/?curid=${event.pageID}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-purple-400 hover:text-purple-300 text-xs mt-1 inline-block"
-                      >
-                        Read on Wikipedia →
-                      </a>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span
-                        className={`text-xl font-bold ${isDark ? "text-purple-400" : "text-purple-600"
-                          }`}
-                      >
-                        {event.year}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark
-                          ? "bg-white/10 text-white/70"
-                          : "bg-gray-100 text-gray-600"
-                          }`}
-                      >
-                        {event.category}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+          />
         ))}
       </MarkerClusterGroup>
 

@@ -78,7 +78,7 @@ const Onboarding = ({ forceOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white z-[99999]">
+      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white z-[1040]">
         <DialogHeader>
           <div className="flex flex-col items-center text-center pt-4">
             <div className="relative mb-4">

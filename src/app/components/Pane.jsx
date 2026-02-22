@@ -11,13 +11,13 @@ import { Dice5, X } from "lucide-react";
 const Pane = ({
   isOpen,
   setIsOpen,
-  mode,
+  lightMode,
   events,
   randomEvents,
   randomizeEvents,
   onEventClick,
 }) => {
-  const isDark = !mode;
+  const isDark = !lightMode;
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -37,8 +37,8 @@ const Pane = ({
             : "0 0 40px rgba(0,0,0,0.08)",
         }}
       >
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="text-lg font-semibold">Random Events</h2>
+        <SheetHeader className="flex flex-row items-center justify-between px-5 pt-5 pb-3">
+          <SheetTitle className="text-lg font-semibold" style={{ color: isDark ? "#e5e7eb" : "#111827" }}>Random Events</SheetTitle>
           <div className="flex gap-2 items-center">
             <button
               onClick={randomizeEvents}
@@ -51,7 +51,7 @@ const Pane = ({
               Randomize
             </button>
           </div>
-        </div>
+        </SheetHeader>
 
         <div className="px-4 pb-4 overflow-y-auto h-[calc(100%-64px)]">
           <ul className="space-y-3">

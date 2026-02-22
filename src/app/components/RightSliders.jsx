@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const RightSliders = ({
   pages,
-  mode,
+  lightMode,
   currentPage,
   setCurrentPage,
   setLimit,
@@ -15,7 +15,7 @@ const RightSliders = ({
   filterTotalEvents,
   totalEvents,
 }) => {
-  const isDark = !mode;
+  const isDark = !lightMode;
   const [sliderValue, setSliderValue] = useState(limit);
 
   const handleSliderChange = (value) => {
@@ -52,8 +52,8 @@ const RightSliders = ({
             max={10000}
             step={1}
             className={`w-20 text-center text-sm font-mono rounded-lg border ${isDark
-                ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
-                : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
+              ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
+              : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
               }`}
           />
         </div>
@@ -75,8 +75,8 @@ const RightSliders = ({
           disabled={currentPage === 1}
           onClick={() => setCurrentPage((p) => p - 1)}
           className={`rounded-lg ${isDark
-              ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
-              : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
+            ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
+            : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
             }`}
         >
           <ChevronLeft className="w-3.5 h-3.5 mr-1" />
@@ -91,8 +91,8 @@ const RightSliders = ({
           disabled={currentPage === pages}
           onClick={() => setCurrentPage((p) => p + 1)}
           className={`rounded-lg ${isDark
-              ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
-              : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
+            ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
+            : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
             }`}
         >
           Next

@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 
-const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, mode }) => {
-  const isDark = !mode;
+const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) => {
+  const isDark = !lightMode;
   const [temporaryRange, setTemporaryRange] = useState([
     yearRange.startYear,
     yearRange.endYear,
@@ -66,8 +66,8 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, mode }) => {
           max={2024}
           step={1}
           className={`w-[90px] text-center text-sm font-mono rounded-lg border transition-colors ${isDark
-              ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"
-              : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
+            ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"
+            : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
             }`}
         />
         <div className="flex-1">
@@ -91,8 +91,8 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, mode }) => {
           max={2024}
           step={1}
           className={`w-[90px] text-center text-sm font-mono rounded-lg border transition-colors ${isDark
-              ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"
-              : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
+            ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"
+            : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
             }`}
         />
       </div>

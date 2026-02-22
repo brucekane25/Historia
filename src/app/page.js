@@ -1,15 +1,14 @@
 "use client";
-import "./globals.css";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Onboarding from "./components/Onboarding";
 import WhatsNew from "./components/WhatsNew";
 import apiClient from "./api/axios";
 import Navbart from "./components/Navbart";
 import categorizeEvents from "./components/CategoriseEvents";
-import { Button } from "@/components/ui/button";
-import { ArrowDown } from "lucide-react";
 import AlternativeDrawer from "./components/AlternativeDrawer";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { Button } from "@/components/ui/button";
+import { ArrowDown } from "lucide-react";
 
 import BottomAppBar from "./components/BottomBar";
 import VerticalSlider from "./components/VerticalSlider";
@@ -19,6 +18,10 @@ import SettingsIcons from "./components/SettingsIcons";
 import EventStats from "./components/EventStats";
 import Pane from "./components/Pane";
 import LoadingScreen from "./components/LoadingScreen";
+import Bookmarks from "./components/Bookmarks";
+import EventDetailModal from "./components/EventDetailModal";
+import OnThisDay from "./components/OnThisDay";
+import CommandPalette from "./components/CommandPalette";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -33,7 +36,6 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pages, setPages] = useState(1);
-  const [panel, setPanel] = useState(true);
   const [limit, setLimit] = useState(2200);
   const [selectedCategory, setSelectedCategory] = useState([]);
   const [randomEvents, setRandomEvents] = useState([]);
@@ -45,29 +47,99 @@ export default function Home() {
     endYear: 2000,
   });
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [detailEvent, setDetailEvent] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLeftOpen, setisLeftOpen] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(false);
   const [isSlider, setIsSlider] = useState(false);
-  const [country, setcountry] = useState();
-  const [mode, setmode] = useState(true);
-  const [settings, setsettings] = useState(false);
-  const [mobileSlider, setMobileSlider] = useState(false);
+  const [country, setCountry] = useState();
+  const [lightMode, setLightMode] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("map");
   const [isLoading, setIsLoading] = useState(true);
   
   // New states
   const [showTutorial, setShowTutorial] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [bookmarksOpen, setBookmarksOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const sharedEventIdRef = useRef(null);
+
+  // Bookmarks — persisted in localStorage
+  const [bookmarks, setBookmarks] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("gloria_bookmarks") || "[]");
+      } catch { return []; }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("gloria_bookmarks", JSON.stringify(bookmarks));
+  }, [bookmarks]);
+
+  const toggleBookmark = useCallback((eventId) => {
+    setBookmarks((prev) =>
+      prev.includes(eventId)
+        ? prev.filter((id) => id !== eventId)
+        : [...prev, eventId]
+    );
+  }, []);
+
+  const isBookmarked = useCallback(
+    (eventId) => bookmarks.includes(eventId),
+    [bookmarks]
+  );
+
+  // Cmd+K command palette
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // Share URL: read ?event= param on load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get("event");
+    if (eventId) {
+      // We'll try to select it once events load
+      sharedEventIdRef.current = eventId;
+    }
+  }, []);
+
+  // Apply shared event ID after events load
+  useEffect(() => {
+    if (events.length > 0 && sharedEventIdRef.current) {
+      const shared = events.find((e) => e._id === sharedEventIdRef.current);
+      if (shared) {
+        setSelectedEvent(shared);
+        setDetailEvent(shared);
+      }
+      sharedEventIdRef.current = null;
+    }
+  }, [events]);
+
+  // Select an event: fly to it on map AND show the detail modal
+  const handleEventSelect = useCallback((event) => {
+    setSelectedEvent(event);
+    setDetailEvent(event);
+  }, []);
 
   // Toggle dark class on html element
   useEffect(() => {
     const html = document.documentElement;
-    if (!mode) {
+    if (!lightMode) {
       html.classList.add("dark");
     } else {
       html.classList.remove("dark");
     }
-  }, [mode]);
+  }, [lightMode]);
 
   const getRandomEvents = useCallback(
     (count) => {
@@ -136,7 +208,7 @@ export default function Home() {
     }
   };
 
-  const isDark = !mode;
+  const isDark = !lightMode;
 
   return (
     <div className={`${isDark ? "dark" : ""}`}>
@@ -146,26 +218,65 @@ export default function Home() {
       />
       <WhatsNew />
 
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        event={detailEvent}
+        onClose={() => setDetailEvent(null)}
+        lightMode={lightMode}
+        isBookmarked={detailEvent ? isBookmarked(detailEvent._id) : false}
+        toggleBookmark={toggleBookmark}
+        onFlyToEvent={(e) => {
+          setSelectedEvent(e);
+          setDetailEvent(null);
+        }}
+      />
+
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        events={events}
+        lightMode={lightMode}
+        setLightMode={setLightMode}
+        setSelectedEvent={handleEventSelect}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setSettingsOpen={setSettingsOpen}
+        setStatsOpen={setStatsOpen}
+        setLeftOpen={setLeftOpen}
+        setBookmarksOpen={setBookmarksOpen}
+      />
+
+      {/* Bookmarks Panel */}
+      <Bookmarks
+        isOpen={bookmarksOpen}
+        setIsOpen={setBookmarksOpen}
+        lightMode={lightMode}
+        events={events}
+        bookmarks={bookmarks}
+        toggleBookmark={toggleBookmark}
+        onEventClick={handleEventSelect}
+      />
+
+      {/* On This Day Widget */}
+      {!isLoading && events.length > 0 && isDesktop && (
+        <OnThisDay
+          events={events}
+          lightMode={lightMode}
+          onEventClick={handleEventSelect}
+        />
+      )}
+
       {/* Loading Screen */}
       <AnimatePresence>
         {isLoading && events.length === 0 && <LoadingScreen isDark={isDark} />}
       </AnimatePresence>
 
-      {/* Mobile Vertical Slider */}
-      {!isDesktop && mobileSlider && (
-        <div className="fixed z-[999] bottom-[47vh] top-auto translate-y-1/2 right-2 flex flex-col items-center gap-2">
-          <VerticalSlider
-            setSelectedEvent={setSelectedEvent}
-            yearRange={yearRange}
-            setYearRange={setYearRange}
-            mode={mode}
-          />
-        </div>
-      )}
+      {/* Mobile Vertical Slider (removed dead mobileSlider usage) */}
 
       {/* Mobile slider close button */}
       {!isDesktop && isSlider && (
-        <div className="fixed z-[9999] bottom-[5vh] top-auto left-1/2 -translate-x-1/2">
+        <div className="fixed z-[1030] bottom-[5vh] top-auto left-1/2 -translate-x-1/2">
           <Button
             onClick={() => setIsSlider(!isSlider)}
             className={`rounded-full ${
@@ -183,11 +294,11 @@ export default function Home() {
         {/* Left drawer */}
         <LeftDrawer
           isDesktop={isDesktop}
-          setisLeftOpen={setisLeftOpen}
-          isLeftOpen={isLeftOpen}
-          mode={mode}
+          setLeftOpen={setLeftOpen}
+          leftOpen={leftOpen}
+          lightMode={lightMode}
           events={events}
-          onEventClick={setSelectedEvent}
+          onEventClick={handleEventSelect}
         />
 
         <div
@@ -197,16 +308,16 @@ export default function Home() {
         >
           {/* Navbar / Bottom Bar */}
           {isDesktop ? (
-            <div className="z-[99999]">
+            <div className="z-[1000]">
               <Navbart
-                setSelectedEvent={setSelectedEvent}
-                isLeftOpen={isLeftOpen}
-                setisLeftOpen={setisLeftOpen}
+                setSelectedEvent={handleEventSelect}
+                leftOpen={leftOpen}
+                setLeftOpen={setLeftOpen}
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
-                mode={mode}
-                setmode={setmode}
-                setcountry={setcountry}
+                lightMode={lightMode}
+                setLightMode={setLightMode}
+                setCountry={setCountry}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
                 events={events}
@@ -215,32 +326,33 @@ export default function Home() {
           ) : (
             <BottomAppBar
               isSlider={isSlider}
-              setisLeftOpen={setisLeftOpen}
-              isLeftOpen={isLeftOpen}
-              settings={settings}
-              setsettings={setsettings}
+              setLeftOpen={setLeftOpen}
+              leftOpen={leftOpen}
+              settingsOpen={settingsOpen}
+              setSettingsOpen={setSettingsOpen}
               setIsSlider={setIsSlider}
-              mode={mode}
-              setmode={setmode}
+              lightMode={lightMode}
+              setLightMode={setLightMode}
               viewMode={viewMode}
               setViewMode={setViewMode}
+              setBookmarksOpen={setBookmarksOpen}
             />
           )}
 
           {/* Desktop Settings Icons (Floating Dock) */}
           {isDesktop && (
             <SettingsIcons
-              panel={panel}
-              setPanel={setPanel}
-              setisLeftOpen={setisLeftOpen}
-              isLeftOpen={isLeftOpen}
-              setmode={setmode}
-              mode={mode}
+              setLeftOpen={setLeftOpen}
+              leftOpen={leftOpen}
+              setLightMode={setLightMode}
+              lightMode={lightMode}
               setIsOpen={setIsOpen}
               isOpen={isOpen}
-              setsettings={setsettings}
-              settings={settings}
+              setSettingsOpen={setSettingsOpen}
+              settingsOpen={settingsOpen}
               setStatsOpen={setStatsOpen}
+              setBookmarksOpen={setBookmarksOpen}
+              setCommandPaletteOpen={setCommandPaletteOpen}
             />
           )}
 
@@ -248,11 +360,11 @@ export default function Home() {
           <div
             className={`absolute panel-cont   
               transition-opacity duration-500 ease-in-out 
-              ${settings ? "opacity-100" : "opacity-0 pointer-events-none"}
+              ${settingsOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
               ${
                 isDesktop
-                  ? "right-40 mr-20 top-[53%] -translate-y-1/2 z-[999]"
-                  : " h-[75vh] top-1/2 -translate-y-1/2 z-[9999] left-1/2 -translate-x-1/2"
+                  ? "right-40 mr-20 top-[53%] -translate-y-1/2 z-[1030]"
+                  : " h-[75vh] top-1/2 -translate-y-1/2 z-[1030] left-1/2 -translate-x-1/2"
               }`}
           >
             <SettingsPanel
@@ -260,7 +372,7 @@ export default function Home() {
               setSelectedEvent={setSelectedEvent}
               yearRange={yearRange}
               setLimit={setLimit}
-              setsettings={setsettings}
+              setSettingsOpen={setSettingsOpen}
               pages={pages}
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
@@ -270,20 +382,20 @@ export default function Home() {
               setYearRange={setYearRange}
               selectedCategory={selectedCategory}
               country={country}
-              setcountry={setcountry}
+              setCountry={setCountry}
               setSelectedCategory={setSelectedCategory}
-              mode={mode}
+              lightMode={lightMode}
               onShowTutorial={() => setShowTutorial(true)}
             />
           </div>
           
            {/* Event Stats Panel */}
-           <div className={`absolute top-20 right-5 z-[990] hidden lg:block`}>
+           <div className={`absolute top-20 right-5 z-[1030] hidden lg:block`}>
             <EventStats
               isOpen={statsOpen}
               onClose={() => setStatsOpen(false)}
               events={events}
-              mode={mode}
+              lightMode={lightMode}
             />
           </div>
 
@@ -291,17 +403,17 @@ export default function Home() {
           {isDesktop ? (
             <Pane
               setIsOpen={setIsOpen}
-              mode={mode}
+              lightMode={lightMode}
               isOpen={isOpen}
               randomEvents={randomEvents}
               randomizeEvents={randomizeEvents}
-              onEventClick={setSelectedEvent}
+              onEventClick={handleEventSelect}
             />
           ) : (
             <AlternativeDrawer
               events={randomEvents}
-              mode={mode}
-              onEventClick={setSelectedEvent}
+              lightMode={lightMode}
+              onEventClick={handleEventSelect}
               isSlider={isSlider}
               randomizeEvents={randomizeEvents}
               setIsSlider={setIsSlider}
@@ -322,8 +434,9 @@ export default function Home() {
                 >
                   <MapComponent
                     events={events}
-                    mode={mode}
+                    lightMode={lightMode}
                     selectedEvent={selectedEvent}
+                    onEventSelect={handleEventSelect}
                   />
                 </motion.div>
               ) : (
@@ -337,9 +450,9 @@ export default function Home() {
                 >
                   <GlobeComponent
                     events={events}
-                    mode={mode}
+                    lightMode={lightMode}
                     selectedEvent={selectedEvent}
-                    onEventSelect={setSelectedEvent}
+                    onEventSelect={handleEventSelect}
                   />
                 </motion.div>
               )}

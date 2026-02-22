@@ -4,11 +4,11 @@ import { FixedSizeList as List } from "react-window";
 const EventTimeline = ({
   events,
   onEventClick,
-  isLeftOpen,
-  mode,
-  setisLeftOpen,
+  leftOpen,
+  lightMode,
+  setLeftOpen,
 }) => {
-  const isDark = !mode;
+  const isDark = !lightMode;
   const sortedEvents = [...events].sort((a, b) => b.year - a.year);
 
   const Row = ({ index, style }) => {
@@ -23,7 +23,7 @@ const EventTimeline = ({
             <div
               onClick={() => {
                 onEventClick(event);
-                setisLeftOpen(!isLeftOpen);
+                setLeftOpen(!leftOpen);
               }}
               className="glass-card p-2.5 cursor-pointer"
               style={{

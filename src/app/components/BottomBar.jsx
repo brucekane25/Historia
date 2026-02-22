@@ -1,34 +1,35 @@
 "use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Dice5, Sun, Moon, LineChart, Settings, Globe, Map } from "lucide-react";
+import { Dice5, Sun, Moon, LineChart, Settings, Globe, Map, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function BottomAppBar({
   setIsSlider,
   isSlider,
-  isLeftOpen,
-  settings,
-  setsettings,
-  setisLeftOpen,
-  mode,
-  setmode,
+  leftOpen,
+  settingsOpen,
+  setSettingsOpen,
+  setLeftOpen,
+  lightMode,
+  setLightMode,
   viewMode,
   setViewMode,
+  setBookmarksOpen,
 }) {
-  const isDark = !mode;
+  const isDark = !lightMode;
 
   return (
     <motion.div
       initial={{ y: 30, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[999]"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[1000]"
     >
       <div
         className={`flex items-center gap-1 px-3 py-2 rounded-2xl shadow-2xl ${isDark
-            ? "glass-dark shadow-purple-500/5"
-            : "glass shadow-black/10"
+          ? "glass-dark shadow-purple-500/5"
+          : "glass shadow-black/10"
           }`}
         style={{
           border: isDark
@@ -39,7 +40,7 @@ export default function BottomAppBar({
         {/* Timeline */}
         <BottomBarBtn
           isDark={isDark}
-          onClick={() => setisLeftOpen(!isLeftOpen)}
+          onClick={() => setLeftOpen(!leftOpen)}
           title="Timeline"
         >
           <LineChart className="w-4 h-4" />
@@ -62,8 +63,8 @@ export default function BottomAppBar({
         <button
           onClick={() => setIsSlider(!isSlider)}
           className={`mx-1 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${isDark
-              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 shadow-lg shadow-purple-500/10"
-              : "bg-purple-100 text-purple-600 hover:bg-purple-200 shadow-lg shadow-purple-500/10"
+            ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 shadow-lg shadow-purple-500/10"
+            : "bg-purple-100 text-purple-600 hover:bg-purple-200 shadow-lg shadow-purple-500/10"
             }`}
           title="Random Events"
         >
@@ -73,20 +74,29 @@ export default function BottomAppBar({
         {/* Dark Mode */}
         <BottomBarBtn
           isDark={isDark}
-          onClick={() => setmode(!mode)}
-          title={mode ? "Dark Mode" : "Light Mode"}
+          onClick={() => setLightMode(!lightMode)}
+          title={lightMode ? "Dark Mode" : "Light Mode"}
         >
-          {mode ? (
+          {lightMode ? (
             <Moon className="w-4 h-4" />
           ) : (
             <Sun className="w-4 h-4" />
           )}
         </BottomBarBtn>
 
+        {/* Bookmarks */}
+        <BottomBarBtn
+          isDark={isDark}
+          onClick={() => setBookmarksOpen(true)}
+          title="Bookmarks"
+        >
+          <Bookmark className="w-4 h-4" />
+        </BottomBarBtn>
+
         {/* Settings */}
         <BottomBarBtn
           isDark={isDark}
-          onClick={() => setsettings(!settings)}
+          onClick={() => setSettingsOpen(!settingsOpen)}
           title="Tweaks"
         >
           <Settings className="w-4 h-4" />
@@ -102,8 +112,8 @@ function BottomBarBtn({ isDark, onClick, title, children }) {
       onClick={onClick}
       title={title}
       className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${isDark
-          ? "text-white/60 hover:text-white hover:bg-white/10"
-          : "text-gray-600 hover:text-gray-900 hover:bg-black/5"
+        ? "text-white/60 hover:text-white hover:bg-white/10"
+        : "text-gray-600 hover:text-gray-900 hover:bg-black/5"
         }`}
     >
       {children}
