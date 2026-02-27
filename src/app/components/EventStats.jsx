@@ -1,6 +1,6 @@
 "use client";
-import { useMemo } from "react";
-import { X, BarChart3, TrendingUp, Calendar } from "lucide-react";
+import { useMemo, useState } from "react";
+import { X, BarChart3, TrendingUp, Calendar, Globe, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 
 const categoryColors = {
@@ -23,8 +23,11 @@ const categoryColors = {
 const EventStats = ({ events, isOpen, onClose, lightMode }) => {
     const isDark = !lightMode;
     const controls = useDragControls();
+    const [globalStats, setGlobalStats] = useState(null);
+    const [loadingGlobal, setLoadingGlobal] = useState(false);
+    const [showGlobal, setShowGlobal] = useState(false);
 
-    // Category distribution
+    // Category distribution (client-side from loaded events)
     const categoryData = useMemo(() => {
         const counts = {};
         events.forEach((e) => {
@@ -64,6 +67,26 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
         const years = events.map((e) => e.year);
         return { min: Math.min(...years), max: Math.max(...years) };
     }, [events]);
+
+    // Fetch global stats from server
+    const fetchGlobalStats = async () => {
+        if (globalStats) {
+            setShowGlobal(!showGlobal);
+            return;
+        }
+        setLoadingGlobal(true);
+        setShowGlobal(true);
+        try {
+            const res = await fetch("/api/events/stats");
+            if (res.ok) {
+                const data = await res.json();
+                setGlobalStats(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch global stats:", err);
+        }
+        setLoadingGlobal(false);
+    };
 
     return (
         <AnimatePresence>
@@ -179,7 +202,7 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                     </div>
 
                     {/* Timeline Sparkline */}
-                    <div>
+                    <div className="mb-4">
                         <p
                             className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-white/40" : "text-gray-400"
                                 }`}
@@ -217,6 +240,121 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                                 {timelineData[timelineData.length - 1]?.year || ""}
                             </span>
                         </div>
+                    </div>
+
+                    {/* ───────── Global Stats ───────── */}
+                    <div>
+                        <button
+                            onClick={fetchGlobalStats}
+                            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all ${isDark
+                                ? "bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
+                                : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                                }`}
+                        >
+                            {loadingGlobal ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <Globe className="w-3.5 h-3.5" />
+                            )}
+                            {showGlobal ? "Hide" : "Show"} Global Stats
+                        </button>
+
+                        <AnimatePresence>
+                            {showGlobal && globalStats && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="pt-3 space-y-3">
+                                        {/* Global summary */}
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <StatCard
+                                                isDark={isDark}
+                                                label="Total DB"
+                                                value={globalStats.totalEvents.toLocaleString()}
+                                            />
+                                            <StatCard
+                                                isDark={isDark}
+                                                label="With Coords"
+                                                value={globalStats.withCoordinates.toLocaleString()}
+                                            />
+                                            <StatCard
+                                                isDark={isDark}
+                                                label="Year Span"
+                                                value={`${globalStats.yearRange.min}–${globalStats.yearRange.max}`}
+                                            />
+                                        </div>
+
+                                        {/* Top Decades */}
+                                        <div>
+                                            <p className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                                <Calendar className="w-3 h-3" /> TOP DECADES
+                                            </p>
+                                            <div className="space-y-1">
+                                                {globalStats.topDecades.slice(0, 8).map((d) => (
+                                                    <div key={d.decade} className="flex items-center gap-2">
+                                                        <span className={`text-[10px] w-12 font-mono ${isDark ? "text-white/50" : "text-gray-500"}`}>
+                                                            {d.decade}s
+                                                        </span>
+                                                        <div className="flex-1 h-3 rounded-full overflow-hidden"
+                                                            style={{
+                                                                background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                                                            }}
+                                                        >
+                                                            <div
+                                                                className="h-full rounded-full"
+                                                                style={{
+                                                                    width: `${(d.count / globalStats.topDecades[0].count) * 100}%`,
+                                                                    backgroundColor: isDark ? "rgba(139,92,246,0.6)" : "rgba(139,92,246,0.7)",
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span className={`text-[10px] font-mono w-8 text-right ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                                            {d.count}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Global Category Breakdown */}
+                                        <div>
+                                            <p className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                                <BarChart3 className="w-3 h-3" /> ALL CATEGORIES (DB)
+                                            </p>
+                                            <div className="space-y-1">
+                                                {globalStats.categories.map((c) => (
+                                                    <div key={c.category} className="flex items-center gap-2">
+                                                        <span className={`text-[10px] w-16 truncate capitalize ${isDark ? "text-white/50" : "text-gray-500"}`}>
+                                                            {c.category}
+                                                        </span>
+                                                        <div className="flex-1 h-3 rounded-full overflow-hidden"
+                                                            style={{
+                                                                background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                                                            }}
+                                                        >
+                                                            <div
+                                                                className="h-full rounded-full"
+                                                                style={{
+                                                                    width: `${(c.count / globalStats.categories[0].count) * 100}%`,
+                                                                    backgroundColor: categoryColors[c.category] || "#6b7280",
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span className={`text-[10px] font-mono w-10 text-right ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                                            {c.count}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </motion.div>
             )}

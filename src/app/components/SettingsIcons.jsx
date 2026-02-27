@@ -1,6 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { Settings, Sun, Moon, Dice5, LineChart, Wrench, BarChart3, Bookmark, Command } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Settings, Sun, Moon, Dice5, Sparkles, LineChart, Wrench, BarChart3, Bookmark, Command } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const SettingsIcons = ({
@@ -15,6 +15,7 @@ const SettingsIcons = ({
   setStatsOpen,
   setBookmarksOpen,
   setCommandPaletteOpen,
+  onSurpriseMe,
 }) => {
   const isDark = !lightMode;
   const [panel, setPanel] = useState(false);
@@ -54,6 +55,11 @@ const SettingsIcons = ({
       icon: <Command className="w-4 h-4" />,
       label: "⌘K",
       onClick: () => setCommandPaletteOpen(true),
+    },
+    {
+      icon: <Sparkles className="w-4 h-4" />,
+      label: "Surprise Me",
+      onClick: onSurpriseMe,
     },
   ];
 

@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Onboarding from "./components/Onboarding";
 import WhatsNew from "./components/WhatsNew";
-import apiClient from "./api/axios";
 import Navbart from "./components/Navbart";
 import categorizeEvents from "./components/CategoriseEvents";
 import AlternativeDrawer from "./components/AlternativeDrawer";
@@ -131,6 +130,20 @@ export default function Home() {
     setDetailEvent(event);
   }, []);
 
+  // Surprise Me: fetch a random event from the API
+  const handleSurpriseMe = useCallback(async () => {
+    try {
+      const res = await fetch('/api/events/random');
+      if (!res.ok) return;
+      const event = await res.json();
+      if (event && event._id) {
+        handleEventSelect(event);
+      }
+    } catch (err) {
+      console.error('Surprise Me failed:', err);
+    }
+  }, [handleEventSelect]);
+
   // Toggle dark class on html element
   useEffect(() => {
     const html = document.documentElement;
@@ -198,10 +211,10 @@ export default function Home() {
     endYear
   ) => {
     try {
-      const response = await apiClient.get("/coordinates", {
-        params: { page, limit, startYear, endYear },
-      });
-      return response.data;
+      const params = new URLSearchParams({ page, limit, startYear, endYear });
+      const response = await fetch(`/api/events/coordinates?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch');
+      return await response.json();
     } catch (error) {
       console.error("Error fetching events with coordinates:", error);
       return null;
@@ -259,9 +272,8 @@ export default function Home() {
       />
 
       {/* On This Day Widget */}
-      {!isLoading && events.length > 0 && isDesktop && (
+      {!isLoading && isDesktop && (
         <OnThisDay
-          events={events}
           lightMode={lightMode}
           onEventClick={handleEventSelect}
         />
@@ -336,6 +348,7 @@ export default function Home() {
               viewMode={viewMode}
               setViewMode={setViewMode}
               setBookmarksOpen={setBookmarksOpen}
+              onSurpriseMe={handleSurpriseMe}
             />
           )}
 
@@ -353,6 +366,7 @@ export default function Home() {
               setStatsOpen={setStatsOpen}
               setBookmarksOpen={setBookmarksOpen}
               setCommandPaletteOpen={setCommandPaletteOpen}
+              onSurpriseMe={handleSurpriseMe}
             />
           )}
 

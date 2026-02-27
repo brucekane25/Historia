@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Dice5, Sun, Moon, LineChart, Settings, Globe, Map, Bookmark } from "lucide-react";
+import { Dice5, Sun, Moon, LineChart, Settings, Globe, Map, Bookmark, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function BottomAppBar({
@@ -16,6 +16,7 @@ export default function BottomAppBar({
   viewMode,
   setViewMode,
   setBookmarksOpen,
+  onSurpriseMe,
 }) {
   const isDark = !lightMode;
 
@@ -91,6 +92,15 @@ export default function BottomAppBar({
           title="Bookmarks"
         >
           <Bookmark className="w-4 h-4" />
+        </BottomBarBtn>
+
+        {/* Surprise Me */}
+        <BottomBarBtn
+          isDark={isDark}
+          onClick={onSurpriseMe}
+          title="Surprise Me"
+        >
+          <Sparkles className="w-4 h-4" />
         </BottomBarBtn>
 
         {/* Settings */}

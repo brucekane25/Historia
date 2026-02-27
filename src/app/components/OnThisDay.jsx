@@ -1,33 +1,30 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, ChevronRight, X, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const MONTHS = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-];
-
-const OnThisDay = ({ events, lightMode, onEventClick }) => {
+const OnThisDay = ({ lightMode, onEventClick }) => {
     const isDark = !lightMode;
     const [visible, setVisible] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [todayEvents, setTodayEvents] = useState([]);
+    const [dateLabel, setDateLabel] = useState("");
 
-    const today = new Date();
-    const todayMonth = MONTHS[today.getMonth()];
-    const todayDay = today.getDate();
-
-    // Find events matching today's month + day in their title
-    const todayEvents = useMemo(() => {
-        if (!events || events.length === 0) return [];
-        const patterns = [
-            `${todayMonth} ${todayDay}`,
-            `${todayDay} ${todayMonth}`,
-        ];
-        return events.filter((e) =>
-            patterns.some((p) => e.title?.toLowerCase().includes(p.toLowerCase()))
-        );
-    }, [events, todayMonth, todayDay]);
+    // Fetch from API
+    useEffect(() => {
+        const fetchToday = async () => {
+            try {
+                const res = await fetch("/api/events/today");
+                if (!res.ok) return;
+                const data = await res.json();
+                setTodayEvents(data.events || []);
+                setDateLabel(data.date || "");
+            } catch (err) {
+                console.error("Failed to fetch today events:", err);
+            }
+        };
+        fetchToday();
+    }, []);
 
     // Show widget after a short delay if there are matching events
     useEffect(() => {
@@ -88,7 +85,7 @@ const OnThisDay = ({ events, lightMode, onEventClick }) => {
                                     className={`text-xs font-semibold ${isDark ? "text-purple-400" : "text-purple-600"
                                         }`}
                                 >
-                                    On This Day — {todayMonth} {todayDay}
+                                    On This Day — {dateLabel}
                                 </span>
                             </div>
                             <button
