@@ -31,8 +31,11 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
         if (todayEvents.length > 0) {
             const dismissed = sessionStorage.getItem("gloria_otd_dismissed");
             if (!dismissed) {
-                const timer = setTimeout(() => setVisible(true), 2500);
+                const timer = setTimeout(() => setVisible(true), 1500);
                 return () => clearTimeout(timer);
+            } else {
+                // Still show if not dismissed, just not with delay
+                setVisible(true);
             }
         }
     }, [todayEvents]);
@@ -54,11 +57,11 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
         <AnimatePresence>
             {visible && (
                 <motion.div
-                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 30, scale: 0.95 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="fixed bottom-6 left-6 z-[1010] max-w-[320px]"
+                    className="fixed top-20 left-4 z-[1010] max-w-[320px]"
                 >
                     <div
                         className={`rounded-2xl shadow-2xl overflow-hidden ${isDark ? "shadow-purple-500/5" : "shadow-black/10"

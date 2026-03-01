@@ -92,24 +92,38 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    drag
-                    dragListener={false}
-                    dragControls={controls}
-                    dragMomentum={false}
-                    whileDrag={{ scale: 1.02 }}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 20, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
-                    className={`rounded-2xl shadow-2xl p-4 w-[300px] max-h-[80vh] overflow-y-auto ${isDark ? "glass-dark" : "glass"
+                    className={`absolute right-4 top-20 rounded-2xl shadow-2xl p-4 w-[300px] max-h-[75vh] overflow-y-auto ${isDark ? "glass-dark" : "glass"
                         }`}
                     style={{
+                        backgroundColor: isDark
+                            ? "rgba(15,17,30,0.92)"
+                            : "rgba(255,255,255,0.92)",
+                        backdropFilter: "blur(24px)",
                         border: isDark
-                            ? "1px solid rgba(255,255,255,0.06)"
-                            : "1px solid rgba(0,0,0,0.06)",
+                            ? "1px solid rgba(6,182,212,0.2)"
+                            : "1px solid rgba(6,182,212,0.15)",
+                        boxShadow: isDark
+                            ? "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(6,182,212,0.1)"
+                            : "0 25px 50px -12px rgba(0,0,0,0.1), 0 0 30px rgba(6,182,212,0.08)",
                         color: isDark ? "#e5e7eb" : "#111827",
                     }}
                 >
+                        {/* Gradient border */}
+                        <div className="relative h-1 -mx-4 -mt-4 mb-4 rounded-t-2xl overflow-hidden">
+                            <div 
+                                className="absolute inset-0"
+                                style={{
+                                    background: "linear-gradient(90deg, #06b6d4, #8b5cf6, #06b6d4)",
+                                    backgroundSize: '200% 100%',
+                                    animation: 'shimmer 2s linear infinite',
+                                }}
+                            />
+                        </div>
+                    
                     {/* Header */}
                     <div
                         className="flex items-center justify-between mb-4 cursor-move"
@@ -117,15 +131,15 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                     >
                         <div className="flex items-center gap-2 pointer-events-none">
                             <BarChart3
-                                className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"
+                                className={`w-4 h-4 ${isDark ? "text-cyan-400" : "text-cyan-600"
                                     }`}
                             />
-                            <h3 className="text-sm font-semibold">Event Statistics</h3>
+                            <h3 className="text-sm font-bold">Event Statistics</h3>
                         </div>
                         <button
                             onClick={onClose}
                             onPointerDown={(e) => e.stopPropagation()}
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isDark
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all hover:scale-105 ${isDark
                                 ? "text-white/40 hover:text-white hover:bg-white/10"
                                 : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
                                 }`}

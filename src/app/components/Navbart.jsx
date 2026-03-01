@@ -15,6 +15,7 @@ const Navbart = ({
   setViewMode,
   events,
   setCountry,
+  setGlobeLoading,
 }) => {
   const isDark = !lightMode;
   const [searchQuery, setSearchQuery] = useState("");
@@ -194,7 +195,12 @@ const Navbart = ({
 
         {/* View Toggle */}
         <button
-          onClick={() => setViewMode(viewMode === "map" ? "globe" : "map")}
+          onClick={() => {
+            if (viewMode === "map") {
+              setGlobeLoading(true);
+            }
+            setViewMode(viewMode === "map" ? "globe" : "map");
+          }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isDark
             ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
             : "bg-black/5 text-gray-600 hover:bg-black/10 hover:text-gray-900"

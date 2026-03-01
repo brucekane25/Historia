@@ -51,16 +51,17 @@ export default function Home() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [isSlider, setIsSlider] = useState(false);
   const [country, setCountry] = useState();
-  const [lightMode, setLightMode] = useState(true);
+  const [lightMode, setLightMode] = useState(false); // Default to dark mode
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState("map");
+  const [viewMode, setViewMode] = useState("map"); // Default to map view
   const [isLoading, setIsLoading] = useState(true);
   
   // New states
   const [showTutorial, setShowTutorial] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(true); // Default to stats open
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [globeLoading, setGlobeLoading] = useState(false);
   const sharedEventIdRef = useRef(null);
 
   // Bookmarks — persisted in localStorage
@@ -332,6 +333,7 @@ export default function Home() {
                 setCountry={setCountry}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
+                setGlobeLoading={setGlobeLoading}
                 events={events}
               />
             </div>
@@ -347,6 +349,7 @@ export default function Home() {
               setLightMode={setLightMode}
               viewMode={viewMode}
               setViewMode={setViewMode}
+              setGlobeLoading={setGlobeLoading}
               setBookmarksOpen={setBookmarksOpen}
               onSurpriseMe={handleSurpriseMe}
             />
@@ -372,13 +375,12 @@ export default function Home() {
 
           {/* Settings Panel */}
           <div
-            className={`absolute panel-cont   
-              transition-opacity duration-500 ease-in-out 
+            className={`absolute panel-cont transition-opacity duration-500 ease-in-out 
               ${settingsOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
               ${
                 isDesktop
-                  ? "right-40 mr-20 top-[53%] -translate-y-1/2 z-[1030]"
-                  : " h-[75vh] top-1/2 -translate-y-1/2 z-[1030] left-1/2 -translate-x-1/2"
+                  ? "right-20 top-20 z-[1030]"
+                  : "fixed inset-0 z-[1050] flex items-center justify-center p-4 bg-black/50"
               }`}
           >
             <SettingsPanel
@@ -460,13 +462,35 @@ export default function Home() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-full w-full"
+                  className="h-full w-full relative"
                 >
+                  {globeLoading && (
+                    <div 
+                      className="absolute inset-0 z-10 flex items-center justify-center"
+                      style={{
+                        background: isDark 
+                          ? "radial-gradient(ellipse at center, #0f1729 0%, #0a0c1a 70%, #050714 100%)" 
+                          : "radial-gradient(ellipse at center, #f1f5f9 0%, #e2e8f0 70%, #cbd5e1 100%)",
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-4">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                          className={`w-12 h-12 rounded-full border-2 ${isDark ? "border-purple-500/30" : "border-purple-300/30"} border-t-purple-500`}
+                        />
+                        <span className={`text-sm font-medium ${isDark ? "text-white/60" : "text-gray-500"}`}>
+                          Loading Globe...
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <GlobeComponent
                     events={events}
                     lightMode={lightMode}
                     selectedEvent={selectedEvent}
                     onEventSelect={handleEventSelect}
+                    onLoad={() => setGlobeLoading(false)}
                   />
                 </motion.div>
               )}

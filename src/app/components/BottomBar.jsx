@@ -15,6 +15,7 @@ export default function BottomAppBar({
   setLightMode,
   viewMode,
   setViewMode,
+  setGlobeLoading,
   setBookmarksOpen,
   onSurpriseMe,
 }) {
@@ -50,7 +51,12 @@ export default function BottomAppBar({
         {/* View Toggle */}
         <BottomBarBtn
           isDark={isDark}
-          onClick={() => setViewMode(viewMode === "map" ? "globe" : "map")}
+          onClick={() => {
+            if (viewMode === "map") {
+              setGlobeLoading(true);
+            }
+            setViewMode(viewMode === "map" ? "globe" : "map");
+          }}
           title={viewMode === "map" ? "Globe View" : "Map View"}
         >
           {viewMode === "map" ? (

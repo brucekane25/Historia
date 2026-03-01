@@ -33,7 +33,15 @@ const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
     const map = useMap();
 
     useEffect(() => {
-      if (selectedEvent) {
+      if (selectedEvent && selectedEvent.coordinates) {
+        const { lat, lon } = selectedEvent.coordinates;
+        
+        // Fly to the location first
+        map.flyTo([lat, lon], 6, {
+          duration: 1.5,
+        });
+        
+        // Then try to show the marker if it exists
         const marker = markersRef.current[selectedEvent._id];
         const clusterGroup = clusterGroupRef.current;
 
@@ -42,7 +50,7 @@ const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
             clusterGroup.zoomToShowLayer(marker, () => {
               marker.openPopup();
             });
-          }, 100);
+          }, 1200); // Wait for flyTo animation
         }
       }
     }, [selectedEvent, map]);
