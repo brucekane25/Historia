@@ -10,6 +10,13 @@
 !.yarn/releases
 !.yarn/versions
 
+# agents
+ historiachat.json
+ AGENTS.md
+ GEMINI.md
+ skills-lock.json
+ ./.agents
+
 # testing
 /coverage
 
