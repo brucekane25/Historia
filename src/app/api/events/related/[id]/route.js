@@ -22,15 +22,19 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    // Find events with same category, within ±50 years, excluding source
-    const related = await Event.find({
+    // Find events with the same category, within ±50 years when dated.
+    const relatedQuery = {
       _id: { $ne: sourceEvent._id },
       category: sourceEvent.category,
-      year: {
+    };
+    if (Number.isFinite(sourceEvent.year)) {
+      relatedQuery.year = {
         $gte: sourceEvent.year - 50,
         $lte: sourceEvent.year + 50,
-      },
-    })
+      };
+    }
+
+    const related = await Event.find(relatedQuery)
       .sort({ year: 1 })
       .limit(6);
 

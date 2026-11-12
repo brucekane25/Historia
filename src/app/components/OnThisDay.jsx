@@ -33,9 +33,6 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
             if (!dismissed) {
                 const timer = setTimeout(() => setVisible(true), 1500);
                 return () => clearTimeout(timer);
-            } else {
-                // Still show if not dismissed, just not with delay
-                setVisible(true);
             }
         }
     }, [todayEvents]);
@@ -125,7 +122,7 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
                                             className={`text-xs font-bold ${isDark ? "text-purple-400" : "text-purple-600"
                                                 }`}
                                         >
-                                            {event.year}
+                                            {event.year ?? "—"}
                                         </span>
                                         <span
                                             className={`text-[10px] px-1.5 py-0.5 rounded-full ${isDark

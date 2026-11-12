@@ -49,17 +49,23 @@ const categorizeEvents = (events) => {
       "commodity", "marketplace", "sector", "tax", "policy", "surplus", "finance minister", "monetary", 
       "devaluation", "equity", "stocks", "shareholder", "investment", "debt"
     ],
+    environmental: [
+      "environment", "climate change", "global warming", "conservation", "biodiversity", "ecosystem",
+      "pollution", "wildlife", "habitat", "deforestation", "renewable energy", "emissions", "carbon",
+      "sustainability", "extinction", "endangered", "ocean", "glacier", "greenhouse", "solar power",
+      "wind farm", "recycling", "environmental protection"
+    ],
     social: [
       "protest", "movement", "rights", "justice", "activism", "equality", "education", "healthcare", 
       "welfare", "poverty", "discrimination", "reform", "civil rights", "freedom", "solidarity", "inclusion", 
       "justice", "representation", "demonstration", "human rights", "minorities", "immigration", "displaced", 
-      "homeless", "refugees", "activist", "advocacy", "awareness", "climate", "anti-racism", "gender", 
+      "homeless", "refugees", "activist", "advocacy", "awareness", "anti-racism", "gender",
       "transparency", "campaign", "lgbtq+", "advocate", "feminism", "humanitarian", "equality", "legislation", 
       "gender equality", "rights", "oppression", "disability", "mental health", "welfare"
     ],
     cultural: [
       "festival", "art", "music", "dance", "literature", "painting", "sculpture", "theater", "performance", 
-      "crafts", "exhibition", "poetry", "artifacts", "show", "pope", "papacy", "artistry", "museum", "tradition",
+      "crafts", "exhibition", "poetry", "artifacts", "show", "artistry", "museum", "tradition", "heritage",
     ],
     religious: [
       "religion", "faith", "god", "church", "bible", "prayer", "holy", "spiritual", "christianity", "islam",
@@ -80,14 +86,20 @@ const categorizeEvents = (events) => {
 
 
 
+  // These categories describe the record type rather than a topic. Keep them
+  // intact so the Births, Deaths, Holidays, and Curated filters stay useful.
+  const preservedCategories = new Set(["births", "deaths", "holidays", "selected"]);
+
   const classifyEvent = (event) => {
-    const text = event.title.toLowerCase();
+    if (preservedCategories.has(event.category)) return event.category;
+
+    const text = (event.title || "").toLowerCase();
     for (const [category, keywords] of Object.entries(categories)) {
       if (keywords.some((keyword) => text.includes(keyword))) {
         return category;
       }
     }
-    return event.category || null; 
+    return event.category || "events";
   };
 
   return events.map((event) => ({

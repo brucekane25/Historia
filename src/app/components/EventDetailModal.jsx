@@ -6,6 +6,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CATEGORY_COLORS as categoryColors } from "@/lib/category-colors";
 import {
     X,
     Bookmark,
@@ -24,22 +25,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const categoryColors = {
-    war: "#ef4444",
-    political: "#8b5cf6",
-    cultural: "#f59e0b",
-    scientific: "#10b981",
-    religious: "#eab308",
-    disasters: "#f97316",
-    discoveries: "#3b82f6",
-    historical: "#ec4899",
-    economic: "#14b8a6",
-    social: "#f43f5e",
-    births: "#a78bfa",
-    deaths: "#6b7280",
-    events: "#22d3ee",
-    environmental: "#22c55e",
-};
 
 const EventDetailModal = ({
     event,
@@ -61,28 +46,40 @@ const EventDetailModal = ({
         if (!event?._id) {
             setRelatedEvents([]);
             setNearbyEvents([]);
+            setLoadingRelated(false);
+            setLoadingNearby(false);
             return;
         }
+
+        const controller = new AbortController();
 
         // Fetch related events
         const fetchRelated = async () => {
             setLoadingRelated(true);
             try {
-                const res = await fetch(`/api/events/related/${event._id}`);
+                const res = await fetch(`/api/events/related/${event._id}`, {
+                    signal: controller.signal,
+                });
                 if (res.ok) {
                     const data = await res.json();
-                    setRelatedEvents(data.related || []);
+                    if (!controller.signal.aborted) {
+                        setRelatedEvents(data.related || []);
+                    }
                 }
             } catch (err) {
-                console.error('Failed to fetch related events:', err);
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to fetch related events:', err);
+                }
+            } finally {
+                if (!controller.signal.aborted) setLoadingRelated(false);
             }
-            setLoadingRelated(false);
         };
 
         // Fetch nearby events
         const fetchNearby = async () => {
             if (!event.coordinates) {
                 setNearbyEvents([]);
+                setLoadingNearby(false);
                 return;
             }
             setLoadingNearby(true);
@@ -93,27 +90,40 @@ const EventDetailModal = ({
                     radius: '5',
                     excludeId: event._id,
                 });
-                const res = await fetch(`/api/events/nearby?${params}`);
+                const res = await fetch(`/api/events/nearby?${params}`, {
+                    signal: controller.signal,
+                });
                 if (res.ok) {
                     const data = await res.json();
-                    setNearbyEvents(data.events || []);
+                    if (!controller.signal.aborted) {
+                        setNearbyEvents(data.events || []);
+                    }
                 }
             } catch (err) {
-                console.error('Failed to fetch nearby events:', err);
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to fetch nearby events:', err);
+                }
+            } finally {
+                if (!controller.signal.aborted) setLoadingNearby(false);
             }
-            setLoadingNearby(false);
         };
 
         fetchRelated();
         fetchNearby();
+
+        return () => controller.abort();
     }, [event?._id]);
 
     if (!event) return null;
 
     const catColor = categoryColors[event.category] || "#6b7280";
+    const hasYear = Number.isFinite(event.year);
+    const hasCoordinates =
+        Number.isFinite(event.coordinates?.lat) &&
+        Number.isFinite(event.coordinates?.lon);
 
     const handleShare = async () => {
-        const url = `${window.location.origin}?event=${event._id}`;
+        const url = `${window.location.origin}${window.location.pathname}?event=${event._id}`;
         try {
             await navigator.clipboard.writeText(url);
             setCopied(true);
@@ -199,6 +209,7 @@ const EventDetailModal = ({
                                 </div>
                             </div>
                             {/* Year overlay */}
+                            {hasYear && (
                             <motion.div 
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -212,6 +223,7 @@ const EventDetailModal = ({
                                     {event.year}
                                 </span>
                             </motion.div>
+                            )}
                         </div>
                     )}
                     
@@ -233,7 +245,7 @@ const EventDetailModal = ({
                             >
                                 {event.category}
                             </span>
-                            {!event.thumbnail && (
+                            {!event.thumbnail && hasYear && (
                                 <span
                                     className="text-xl font-black ml-auto"
                                     style={{ color: catColor }}
@@ -260,7 +272,7 @@ const EventDetailModal = ({
                             transition={{ delay: 0.2 }}
                             className="flex flex-wrap gap-4 mb-6"
                         >
-                            {event.thumbnail && (
+                            {hasYear && (
                                 <motion.div
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -271,7 +283,7 @@ const EventDetailModal = ({
                                     <span>Year {event.year}</span>
                                 </motion.div>
                             )}
-                            {event.coordinates && (
+                            {hasCoordinates && (
                                 <motion.div
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -434,7 +446,7 @@ const EventDetailModal = ({
                                                     </p>
                                                     <div className="flex items-center gap-2">
                                                         <span className={`text-[10px] font-bold`} style={{ color: categoryColors[re.category] || categoryColors.events }}>
-                                                            {re.year}
+                                                            {Number.isFinite(re.year) ? re.year : "—"}
                                                         </span>
                                                         <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${isDark ? "bg-white/5 text-white/50" : "bg-gray-100 text-gray-500"}`}>
                                                             {re.category}
@@ -497,7 +509,7 @@ const EventDetailModal = ({
                                                     </p>
                                                     <div className="flex items-center gap-2">
                                                         <span className={`text-[10px] font-bold`} style={{ color: categoryColors[ne.category] || categoryColors.events }}>
-                                                            {ne.year}
+                                                            {Number.isFinite(ne.year) ? ne.year : "—"}
                                                         </span>
                                                         {ne.distance !== undefined && (
                                                             <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${isDark ? "bg-white/5 text-white/50" : "bg-gray-100 text-gray-500"}`}>

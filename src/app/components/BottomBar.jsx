@@ -14,9 +14,9 @@ export default function BottomAppBar({
   lightMode,
   setLightMode,
   viewMode,
-  setViewMode,
-  setGlobeLoading,
+  onViewChange,
   setBookmarksOpen,
+  bookmarksOpen,
   onSurpriseMe,
 }) {
   const isDark = !lightMode;
@@ -44,6 +44,7 @@ export default function BottomAppBar({
           isDark={isDark}
           onClick={() => setLeftOpen(!leftOpen)}
           title="Timeline"
+          active={leftOpen}
         >
           <LineChart className="w-4 h-4" />
         </BottomBarBtn>
@@ -51,12 +52,7 @@ export default function BottomAppBar({
         {/* View Toggle */}
         <BottomBarBtn
           isDark={isDark}
-          onClick={() => {
-            if (viewMode === "map") {
-              setGlobeLoading(true);
-            }
-            setViewMode(viewMode === "map" ? "globe" : "map");
-          }}
+          onClick={() => onViewChange(viewMode === "map" ? "globe" : "map")}
           title={viewMode === "map" ? "Globe View" : "Map View"}
         >
           {viewMode === "map" ? (
@@ -96,6 +92,7 @@ export default function BottomAppBar({
           isDark={isDark}
           onClick={() => setBookmarksOpen(true)}
           title="Bookmarks"
+          active={bookmarksOpen}
         >
           <Bookmark className="w-4 h-4" />
         </BottomBarBtn>
@@ -114,6 +111,7 @@ export default function BottomAppBar({
           isDark={isDark}
           onClick={() => setSettingsOpen(!settingsOpen)}
           title="Tweaks"
+          active={settingsOpen}
         >
           <Settings className="w-4 h-4" />
         </BottomBarBtn>
@@ -122,14 +120,14 @@ export default function BottomAppBar({
   );
 }
 
-function BottomBarBtn({ isDark, onClick, title, children }) {
+function BottomBarBtn({ isDark, onClick, title, active = false, children }) {
   return (
     <button
       onClick={onClick}
       title={title}
       className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${isDark
-        ? "text-white/60 hover:text-white hover:bg-white/10"
-        : "text-gray-600 hover:text-gray-900 hover:bg-black/5"
+        ? active ? "bg-white/10 text-white" : "text-white/60 hover:text-white hover:bg-white/10"
+        : active ? "bg-black/5 text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-black/5"
         }`}
     >
       {children}

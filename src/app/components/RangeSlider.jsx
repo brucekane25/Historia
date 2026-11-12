@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { HISTORY_YEAR_MIN, HISTORY_YEAR_MAX } from "@/lib/history-range";
 
 const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) => {
   const isDark = !lightMode;
@@ -21,7 +22,7 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
   const handleChangeCommitted = (newValue) => {
     setYearRange({ startYear: newValue[0], endYear: newValue[1] });
     if (setSelectedEvent) {
-      setSelectedEvent({ startYear: newValue[0], endYear: newValue[1] });
+      setSelectedEvent(null);
     }
   };
 
@@ -34,14 +35,14 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
 
   const handleInputBlur = () => {
     let [startYear, endYear] = temporaryRange;
-    startYear = Math.max(-1458, Math.min(startYear, 2024));
-    endYear = Math.max(-1458, Math.min(endYear, 2024));
+    startYear = Math.max(HISTORY_YEAR_MIN, Math.min(startYear, HISTORY_YEAR_MAX));
+    endYear = Math.max(HISTORY_YEAR_MIN, Math.min(endYear, HISTORY_YEAR_MAX));
     if (startYear > endYear) startYear = endYear;
 
     setTemporaryRange([startYear, endYear]);
     setYearRange({ startYear, endYear });
     if (setSelectedEvent) {
-      setSelectedEvent({ startYear, endYear });
+      setSelectedEvent(null);
     }
   };
 
@@ -62,8 +63,8 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
           onChange={(e) => handleInputChange(0, e)}
           onBlur={handleInputBlur}
           onKeyDown={(e) => e.key === "Enter" && handleInputBlur()}
-          min={-1458}
-          max={2024}
+          min={HISTORY_YEAR_MIN}
+          max={HISTORY_YEAR_MAX}
           step={1}
           className={`w-[90px] text-center text-sm font-mono rounded-lg border transition-colors ${isDark
             ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"
@@ -75,8 +76,8 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
             value={temporaryRange}
             onValueChange={handleChange}
             onValueCommit={handleChangeCommitted}
-            min={-1458}
-            max={2024}
+            min={HISTORY_YEAR_MIN}
+            max={HISTORY_YEAR_MAX}
             step={1}
             aria-labelledby="range-slider"
           />
@@ -87,8 +88,8 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
           onChange={(e) => handleInputChange(1, e)}
           onBlur={handleInputBlur}
           onKeyDown={(e) => e.key === "Enter" && handleInputBlur()}
-          min={-1458}
-          max={2024}
+          min={HISTORY_YEAR_MIN}
+          max={HISTORY_YEAR_MAX}
           step={1}
           className={`w-[90px] text-center text-sm font-mono rounded-lg border transition-colors ${isDark
             ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"

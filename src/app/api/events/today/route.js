@@ -19,11 +19,10 @@ export async function GET() {
     const now = new Date();
     const month = MONTHS[now.getMonth()];
     const day = now.getDate();
+    // The dataset stores a zero-padded MM/DD date, e.g. "11/03".
+    const dateKey = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
 
-    // Match titles containing "January 5" or "5 January" etc.
-    const regex = new RegExp(`(${month}\\s+${day}\\b|\\b${day}\\s+${month})`, 'i');
-
-    const events = await Event.find({ title: { $regex: regex } })
+    const events = await Event.find({ date: dateKey })
       .sort({ thumbnail: -1, year: -1 })
       .limit(20);
 

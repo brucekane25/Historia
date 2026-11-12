@@ -584,7 +584,7 @@ function EventPoints({ events, onEventSelect, isDark }) {
                 className="text-[10px] font-bold tabular-nums"
                 style={{ color: getCategoryColor(hoveredEvent.category) }}
               >
-                {hoveredEvent.year}
+                {Number.isFinite(hoveredEvent.year) ? hoveredEvent.year : "—"}
               </span>
               <span
                 className="rounded-full px-1.5 py-0.5 text-[9px] capitalize"
@@ -732,7 +732,7 @@ function SelectionMarker({ event, isDark, glowTexture, onEventSelect }) {
               className="ml-auto text-[10px] font-bold tabular-nums"
               style={{ color: isDark ? "#e2e8f0" : "#334155" }}
             >
-              {event.year}
+              {Number.isFinite(event.year) ? event.year : "—"}
             </span>
           </div>
           <p
@@ -994,6 +994,7 @@ function HudButton({ active = false, onClick, icon: Icon, label, isDark }) {
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={`pointer-events-auto flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[10px] font-medium transition-all duration-200 backdrop-blur-xl ${
         active
           ? isDark
@@ -1149,6 +1150,7 @@ const GlobeComponent = ({
     return {
       count: coordinates.length,
       categories: categories.size,
+      hasYears: Number.isFinite(minYear),
       minYear: Number.isFinite(minYear) ? minYear : 0,
       maxYear: Number.isFinite(maxYear) ? maxYear : 0,
     };
@@ -1392,10 +1394,10 @@ const GlobeComponent = ({
                 isDark ? "text-white/35" : "text-gray-400"
               }`}
             >
-              <span>{stats.categories} categories</span>
+              <span>{stats.categories} {stats.categories === 1 ? "category" : "categories"}</span>
               <span className="opacity-30">·</span>
               <span className="tabular-nums">
-                {stats.minYear} → {stats.maxYear}
+                {stats.hasYears ? `${stats.minYear} → ${stats.maxYear}` : "—"}
               </span>
             </div>
           </div>

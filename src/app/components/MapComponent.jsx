@@ -249,6 +249,23 @@ const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
           })}
         </MarkerClusterGroup>
 
+        {selectedEvent?.coordinates &&
+          !(events || []).some((event) => event._id === selectedEvent._id) && (
+            <Marker
+              icon={getMarkerIcon(selectedEvent.category || "default", true)}
+              position={[
+                selectedEvent.coordinates.lat,
+                selectedEvent.coordinates.lon,
+              ]}
+              riseOnHover
+              title={selectedEvent.title}
+              zIndexOffset={1000}
+              eventHandlers={{
+                click: () => onEventSelect(selectedEvent),
+              }}
+            />
+          )}
+
         <MapUpdater
           focusedEvent={selectedEvent}
           markersRef={markersRef}

@@ -11,8 +11,33 @@ import {
     LineChart,
     Bookmark,
     Command,
+    Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+function titleRelevance(title, query) {
+    const text = (title || "").toLowerCase();
+    if (!text) return 0;
+    let score = 0;
+    if (text.startsWith(query)) score += 40;
+    const index = text.indexOf(query);
+    if (index === 0) score += 10;
+    else if (index > 0) score += 4;
+    score += Math.max(0, 10 - Math.floor(text.length / 30));
+    return score;
+}
+
+const ACTION_LABELS = [
+    "switch to dark mode",
+    "switch to light mode",
+    "switch to globe view",
+    "switch to map view",
+    "open stats panel",
+    "open timeline",
+    "open tweaks panel",
+    "open bookmarks",
+    "surprise me",
+];
 
 const CommandPalette = ({
     isOpen,
@@ -22,15 +47,18 @@ const CommandPalette = ({
     setLightMode,
     setSelectedEvent,
     viewMode,
-    setViewMode,
+    onViewChange,
     setSettingsOpen,
     setStatsOpen,
     setLeftOpen,
     setBookmarksOpen,
+    onSurpriseMe,
 }) => {
     const isDark = !lightMode;
     const [query, setQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [remoteEvents, setRemoteEvents] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
     const inputRef = useRef(null);
     const listRef = useRef(null);
 
@@ -39,9 +67,55 @@ const CommandPalette = ({
         if (isOpen) {
             setQuery("");
             setSelectedIndex(0);
+            setRemoteEvents([]);
             setTimeout(() => inputRef.current?.focus(), 50);
         }
     }, [isOpen]);
+
+    // Full-database event search, debounced.
+    useEffect(() => {
+        const q = query.trim();
+        if (!isOpen || q.length < 2) {
+            setRemoteEvents([]);
+            setIsSearching(false);
+            return;
+        }
+
+        // Don't hit the archive API when the query is just an action name.
+        if (ACTION_LABELS.some((label) => label.includes(q.toLowerCase()))) {
+            setRemoteEvents([]);
+            setIsSearching(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        setIsSearching(true);
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(
+                    `/api/events/search/${encodeURIComponent(q)}?limit=8`,
+                    { signal: controller.signal }
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!controller.signal.aborted) {
+                        setRemoteEvents(Array.isArray(data) ? data : data.events || []);
+                    }
+                }
+            } catch (err) {
+                if (err.name !== "AbortError") {
+                    console.error("Command palette search failed:", err);
+                }
+            } finally {
+                if (!controller.signal.aborted) setIsSearching(false);
+            }
+        }, 240);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [query, isOpen]);
 
     // Actions
     const actions = useMemo(
@@ -62,7 +136,7 @@ const CommandPalette = ({
                     ) : (
                         <Map className="w-4 h-4" />
                     ),
-                action: () => setViewMode(viewMode === "map" ? "globe" : "map"),
+                action: () => onViewChange(viewMode === "map" ? "globe" : "map"),
                 group: "Actions",
             },
             {
@@ -93,8 +167,15 @@ const CommandPalette = ({
                 action: () => setBookmarksOpen(true),
                 group: "Actions",
             },
+            {
+                id: "surprise-me",
+                label: "Surprise Me",
+                icon: <Sparkles className="w-4 h-4" />,
+                action: onSurpriseMe,
+                group: "Actions",
+            },
         ],
-        [lightMode, viewMode, setLightMode, setViewMode, setSettingsOpen, setStatsOpen, setLeftOpen, setBookmarksOpen]
+        [lightMode, viewMode, setLightMode, onViewChange, setSettingsOpen, setStatsOpen, setLeftOpen, setBookmarksOpen, onSurpriseMe]
     );
 
     // Search results
@@ -106,20 +187,33 @@ const CommandPalette = ({
             a.label.toLowerCase().includes(q)
         );
 
-        const filteredEvents = (events || [])
+        const localEvents = (events || [])
             .filter((e) => e.title?.toLowerCase().includes(q))
-            .slice(0, 10)
-            .map((e) => ({
+            .slice(0, 10);
+
+        const seen = new Set(localEvents.map((e) => e._id));
+        const mergedEvents = [
+            ...localEvents,
+            ...remoteEvents.filter((e) => e?._id && !seen.has(e._id)),
+        ]
+            .sort(
+                (a, b) =>
+                    titleRelevance(b.title, q) - titleRelevance(a.title, q) ||
+                    (b.year || 0) - (a.year || 0)
+            )
+            .slice(0, 10);
+
+        const filteredEvents = mergedEvents.map((e) => ({
                 id: e._id,
                 label: e.title,
-                sublabel: `${e.year} · ${e.category}`,
+                sublabel: `${e.year ?? "—"} · ${e.category}`,
                 thumbnail: e.thumbnail,
                 action: () => setSelectedEvent(e),
                 group: "Events",
             }));
 
         return { events: filteredEvents, actions: filteredActions };
-    }, [query, events, actions, setSelectedEvent]);
+    }, [query, events, actions, setSelectedEvent, remoteEvents]);
 
     const allItems = [...results.actions, ...results.events];
 
@@ -244,7 +338,9 @@ const CommandPalette = ({
                                     className={`text-sm ${isDark ? "text-white/30" : "text-gray-400"
                                         }`}
                                 >
-                                    No results for &ldquo;{query}&rdquo;
+                                    {isSearching
+                                        ? "Searching…"
+                                        : `No results for “${query}”`}
                                 </p>
                             </div>
                         )}
@@ -321,6 +417,7 @@ const CommandPalette = ({
                                             src={item.thumbnail}
                                             alt=""
                                             className="w-8 h-8 rounded object-cover flex-shrink-0"
+                                            onError={(e) => { e.currentTarget.style.display = "none"; }}
                                         />
                                     )}
                                     <div className="min-w-0 flex-1">

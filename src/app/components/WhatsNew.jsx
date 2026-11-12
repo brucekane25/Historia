@@ -8,19 +8,27 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, X } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
-const LATEST_VERSION = "3.0.0";
+const LATEST_VERSION = "3.1.0";
 
-const WhatsNew = () => {
+const WhatsNew = ({ lightMode = false }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const isDark = !lightMode;
 
   useEffect(() => {
-    const lastSeenVersion = localStorage.getItem("lastSeenVersion");
-    if (lastSeenVersion !== LATEST_VERSION) {
-      setIsOpen(true);
-      localStorage.setItem("lastSeenVersion", LATEST_VERSION);
-    }
+    const timer = setTimeout(() => {
+      // Don't stack the release notes on top of the first-run tour.
+      if (sessionStorage.getItem("gloria_onboarding_active")) return;
+
+      const lastSeenVersion = localStorage.getItem("lastSeenVersion");
+      if (lastSeenVersion !== LATEST_VERSION) {
+        setIsOpen(true);
+        localStorage.setItem("lastSeenVersion", LATEST_VERSION);
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleClose = () => {
@@ -29,58 +37,58 @@ const WhatsNew = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white z-[1040]">
+      <DialogContent className={`sm:max-w-[440px] z-[1040] border ${isDark ? "bg-[#0f1120] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-purple-400" />
-            <DialogTitle className="text-lg font-bold text-white">
-              What&apos;s New in Gloria v3
+            <DialogTitle className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+              What&apos;s New in Gloria v3.1
             </DialogTitle>
           </div>
         </DialogHeader>
 
         <div className="py-2">
-          <p className="text-sm text-white/50 mb-4">
+          <p className={`text-sm mb-4 ${isDark ? "text-white/50" : "text-gray-500"}`}>
             Here&apos;s what&apos;s new:
           </p>
           <ul className="space-y-2.5">
             {[
               {
-                emoji: "⭐",
-                title: "Bookmarked Events",
-                desc: "Save your favorite events and access them anytime",
+                emoji: "🌍",
+                title: "Live 3D Globe",
+                desc: "Glowing event points, density heat, connection arcs, and focus-on-select",
               },
               {
-                emoji: "📅",
-                title: "On This Day",
-                desc: "Discover what happened on today's date throughout history",
+                emoji: "🗺️",
+                title: "Keyless Map Layers",
+                desc: "Dark, light, satellite, terrain, and street tiles with no API key required",
               },
               {
                 emoji: "🔍",
-                title: "Event Detail Modal",
-                desc: "Rich event details with Wikipedia links and quick actions",
+                title: "Full-Archive Search",
+                desc: "Search every event in the archive from the navbar or command palette",
               },
               {
-                emoji: "⌨️",
-                title: "Command Palette",
-                desc: "Press ⌘K to search events and access quick actions",
+                emoji: "🔖",
+                title: "Persistent Bookmarks",
+                desc: "Saved events now stay available even after changing filters or pages",
               },
               {
-                emoji: "🔗",
-                title: "Share Events",
-                desc: "Copy a link to any event and share it with others",
+                emoji: "📊",
+                title: "Sharper Stats & Links",
+                desc: "Cleaner global statistics, shareable event links, and quick actions",
               },
             ].map((item, i) => (
               <li
                 key={i}
-                className="flex items-start gap-3 p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.04]"
+                className={`flex items-start gap-3 p-2.5 rounded-lg border ${isDark ? "bg-white/[0.03] border-white/[0.04]" : "bg-black/[0.02] border-black/[0.04]"}`}
               >
                 <span className="text-lg">{item.emoji}</span>
                 <div>
-                  <h4 className="text-sm font-medium text-white">
+                  <h4 className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                     {item.title}
                   </h4>
-                  <p className="text-xs text-white/40">{item.desc}</p>
+                  <p className={`text-xs ${isDark ? "text-white/40" : "text-gray-500"}`}>{item.desc}</p>
                 </div>
               </li>
             ))}

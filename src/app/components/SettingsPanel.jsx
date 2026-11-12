@@ -5,19 +5,18 @@ import RangeSlider from "./RangeSlider";
 import RightSliders from "./RightSliders";
 import CategoryDropdown from "./CategoryDropdown";
 import { X, Filter, Sliders, BarChart3, HelpCircle, Sparkles, RotateCcw } from "lucide-react";
+import { FULL_YEAR_RANGE } from "@/lib/history-range";
 
 import { motion, useDragControls } from "framer-motion";
 
 export default function SettingsPanel({
   isDesktop,
   lightMode,
-  country,
   selectedCategory,
   setSelectedCategory,
   setSelectedEvent,
   setYearRange,
   setSettingsOpen,
-  setCountry,
   yearRange,
   pages,
   currentPage,
@@ -26,15 +25,17 @@ export default function SettingsPanel({
   limit,
   filterTotalEvents,
   totalEvents,
+  isLoading,
   onShowTutorial,
 }) {
   const isDark = !lightMode;
   const controls = useDragControls();
 
   const handleClearFilters = () => {
-    setYearRange({ startYear: -3000, endYear: 2024 });
+    setYearRange({ ...FULL_YEAR_RANGE });
     setSelectedCategory([]);
-    setCountry("");
+    setSelectedEvent(null);
+    setCurrentPage(1);
   };
 
   return (
@@ -122,12 +123,18 @@ export default function SettingsPanel({
           color="#8b5cf6"
         >
           <CategoryDropdown
-            onCategoryChange={setSelectedCategory}
-            clr={setSelectedEvent}
             lightMode={lightMode}
             selectedCategories={selectedCategory}
             setSelectedCategories={setSelectedCategory}
           />
+          <p
+            className={`mt-2 text-[10px] leading-relaxed ${
+              isDark ? "text-white/30" : "text-gray-400"
+            }`}
+          >
+            Curated, Holidays, Births and Deaths search the whole archive. Topic and
+            generic event filters apply to the events currently loaded.
+          </p>
         </SettingsSection>
 
         {/* Year Range */}
@@ -161,6 +168,7 @@ export default function SettingsPanel({
             limit={limit}
             filterTotalEvents={filterTotalEvents}
             totalEvents={totalEvents}
+            isLoading={isLoading}
           />
         </SettingsSection>
 

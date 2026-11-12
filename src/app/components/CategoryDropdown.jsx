@@ -1,8 +1,8 @@
 "use client"
-import { useEffect } from "react";
 import { Chip } from "@/components/ui/chip";
 import {
   Calendar as EventIcon,
+  CalendarDays as HolidayIcon,
   Cake as CakeIcon,
   Frown as SentimentDissatisfiedIcon,
   Globe as PublicIcon,
@@ -19,9 +19,10 @@ import {
   AppWindow as CategoryIcon,
 } from "lucide-react";
 
-const CategoryDropdown = ({ onCategoryChange, clr, lightMode, selectedCategories, setSelectedCategories }) => {
+const CategoryDropdown = ({ lightMode, selectedCategories, setSelectedCategories }) => {
   const categories = [
-    { value: "selected", label: "Selected", icon: <SearchIcon /> },
+    { value: "selected", label: "Curated", icon: <SearchIcon /> },
+    { value: "holidays", label: "Holidays", icon: <HolidayIcon /> },
     { value: "births", label: "Births", icon: <CakeIcon /> },
     { value: "deaths", label: "Deaths", icon: <SentimentDissatisfiedIcon /> },
     { value: "events", label: "Events", icon: <EventIcon /> },
@@ -38,19 +39,12 @@ const CategoryDropdown = ({ onCategoryChange, clr, lightMode, selectedCategories
     { value: "discoveries", label: "Discoveries", icon: <CategoryIcon /> },
   ];
 
-  useEffect(() => {
-    onCategoryChange(selectedCategories);
-    clr(null);
-  }, [selectedCategories, onCategoryChange, clr]);
-
   const handleCategorySelect = (value) => {
-    setSelectedCategories((prevCategories) => {
-      const updatedCategories = prevCategories.includes(value)
-        ? prevCategories.filter((category) => category !== value)
-        : [...prevCategories, value];
+    const updatedCategories = selectedCategories.includes(value)
+      ? selectedCategories.filter((category) => category !== value)
+      : [...selectedCategories, value];
 
-      return updatedCategories;
-    });
+    setSelectedCategories(updatedCategories);
   };
 
   return (
@@ -58,7 +52,16 @@ const CategoryDropdown = ({ onCategoryChange, clr, lightMode, selectedCategories
       {categories.map((category) => (
         <Chip
           key={category.value}
+          role="button"
+          tabIndex={0}
+          aria-pressed={selectedCategories.includes(category.value)}
           onClick={() => handleCategorySelect(category.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              handleCategorySelect(category.value);
+            }
+          }}
           variant={selectedCategories.includes(category.value) ? (lightMode ? "success" : "destructive") : "default"}
           className="cursor-pointer"
         >

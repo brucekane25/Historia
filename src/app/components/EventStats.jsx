@@ -2,23 +2,13 @@
 import { useMemo, useState } from "react";
 import { X, BarChart3, TrendingUp, Calendar, Globe, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
+import { CATEGORY_COLORS as categoryColors } from "@/lib/category-colors";
 
-const categoryColors = {
-    war: "#ef4444",
-    political: "#8b5cf6",
-    cultural: "#f59e0b",
-    scientific: "#10b981",
-    religious: "#eab308",
-    disasters: "#f97316",
-    discoveries: "#3b82f6",
-    historical: "#ec4899",
-    economic: "#14b8a6",
-    social: "#f43f5e",
-    births: "#a78bfa",
-    deaths: "#6b7280",
-    events: "#22d3ee",
-    environmental: "#22c55e",
+const CATEGORY_LABELS = {
+    selected: "Curated",
 };
+
+const categoryLabel = (category) => CATEGORY_LABELS[category] || category;
 
 const EventStats = ({ events, isOpen, onClose, lightMode }) => {
     const isDark = !lightMode;
@@ -48,6 +38,7 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
     const timelineData = useMemo(() => {
         const centuries = {};
         events.forEach((e) => {
+            if (!Number.isFinite(e.year)) return;
             const century = Math.floor(e.year / 100) * 100;
             centuries[century] = (centuries[century] || 0) + 1;
         });
@@ -63,8 +54,10 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
 
     // Year range
     const yearRange = useMemo(() => {
-        if (events.length === 0) return { min: 0, max: 0 };
-        const years = events.map((e) => e.year);
+        const years = events
+            .map((e) => e.year)
+            .filter((year) => Number.isFinite(year));
+        if (years.length === 0) return { min: "—", max: "—" };
         return { min: Math.min(...years), max: Math.max(...years) };
     }, [events]);
 
@@ -81,9 +74,12 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
             if (res.ok) {
                 const data = await res.json();
                 setGlobalStats(data);
+            } else {
+                setShowGlobal(false);
             }
         } catch (err) {
             console.error("Failed to fetch global stats:", err);
+            setShowGlobal(false);
         }
         setLoadingGlobal(false);
     };
@@ -92,11 +88,16 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
         <AnimatePresence>
             {isOpen && (
                 <motion.div
+                    drag
+                    dragListener={false}
+                    dragControls={controls}
+                    dragMomentum={false}
+                    whileDrag={{ scale: 1.01 }}
                     initial={{ opacity: 0, x: 20, scale: 0.95 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     exit={{ opacity: 0, x: 20, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
-                    className={`absolute right-4 top-20 rounded-2xl shadow-2xl p-4 w-[300px] max-h-[75vh] overflow-y-auto ${isDark ? "glass-dark" : "glass"
+                    className={`absolute right-4 top-20 z-[1030] rounded-2xl shadow-2xl p-4 w-[300px] max-h-[75vh] overflow-y-auto ${isDark ? "glass-dark" : "glass"
                         }`}
                     style={{
                         backgroundColor: isDark
@@ -182,7 +183,7 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                                         className={`text-[10px] w-16 truncate capitalize ${isDark ? "text-white/50" : "text-gray-500"
                                             }`}
                                     >
-                                        {cat}
+                                        {categoryLabel(cat)}
                                     </span>
                                     <div className="flex-1 h-4 rounded-full overflow-hidden relative"
                                         style={{
@@ -343,7 +344,7 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                                                 {globalStats.categories.map((c) => (
                                                     <div key={c.category} className="flex items-center gap-2">
                                                         <span className={`text-[10px] w-16 truncate capitalize ${isDark ? "text-white/50" : "text-gray-500"}`}>
-                                                            {c.category}
+                                                            {categoryLabel(c.category)}
                                                         </span>
                                                         <div className="flex-1 h-3 rounded-full overflow-hidden"
                                                             style={{

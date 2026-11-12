@@ -36,6 +36,7 @@ export async function GET(request) {
           { $sort: { count: -1 } },
         ],
         decades: [
+          { $match: { year: { $type: 'number' } } },
           {
             $group: {
               _id: { $multiply: [{ $floor: { $divide: ['$year', 10] } }, 10] },
@@ -46,6 +47,7 @@ export async function GET(request) {
           { $limit: 15 },
         ],
         centuries: [
+          { $match: { year: { $type: 'number' } } },
           {
             $group: {
               _id: { $multiply: [{ $floor: { $divide: ['$year', 100] } }, 100] },

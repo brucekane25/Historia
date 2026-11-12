@@ -12,8 +12,12 @@ export async function GET(request) {
     await dbConnect();
     const { searchParams } = new URL(request.url);
     
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const rawPage = parseInt(searchParams.get('page') || '1');
+    const rawLimit = parseInt(searchParams.get('limit') || '100');
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(rawLimit, 1), 10000)
+      : 100;
     const startYear = searchParams.get('startYear');
     const endYear = searchParams.get('endYear');
     const category = searchParams.get('category');
@@ -22,20 +26,36 @@ export async function GET(request) {
     const query = { coordinates: { $ne: null } };
 
     if (startYear && endYear) {
-      query.year = { $gte: Number(startYear), $lte: Number(endYear) };
+      const yearFilter = {
+        $gte: Number(startYear),
+        $lte: Number(endYear),
+      };
+
+      if (category) {
+        // Holidays and other date-based records can have no year. Keep them
+        // visible when a category filter is active instead of silently
+        // dropping them from the map.
+        query.$or = [{ year: yearFilter }, { year: null }];
+      } else {
+        query.year = yearFilter;
+      }
     }
 
-    const validCategories = ['selected', 'births', 'deaths', 'events', 'holidays'];
-    if (category && validCategories.includes(category.toLowerCase())) {
-      query.category = category.toLowerCase();
+    if (category) {
+      const categories = category
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (categories.length === 1) {
+        query.category = categories[0];
+      } else if (categories.length > 1) {
+        query.category = { $in: categories };
+      }
     }
 
-    console.log('Query:', JSON.stringify(query));
-    
     const events = await Event.find(query).skip(skip).limit(limit);
     const totalEvents = await Event.countDocuments(query);
-    
-    console.log('Found events:', totalEvents);
 
     return NextResponse.json({
       events,

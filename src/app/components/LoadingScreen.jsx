@@ -2,6 +2,13 @@
 import { motion } from "framer-motion";
 import { Globe, Sparkles } from "lucide-react";
 
+const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
+    left: `${(i * 37 + 11) % 100}%`,
+    top: `${(i * 53 + 7) % 100}%`,
+    duration: 2 + ((i * 13) % 20) / 10,
+    delay: ((i * 17) % 20) / 10,
+}));
+
 const LoadingScreen = ({ lightMode }) => {
     const isDark = !lightMode;
     return (
@@ -19,23 +26,23 @@ const LoadingScreen = ({ lightMode }) => {
         >
             {/* Background particles */}
             <div className="absolute inset-0 overflow-hidden">
-                {[...Array(20)].map((_, i) => (
+                {[...PARTICLES].map((particle, i) => (
                     <motion.div
                         key={i}
                         className="absolute w-1 h-1 rounded-full"
                         style={{
                             backgroundColor: isDark ? "#8b5cf6" : "#a78bfa",
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
+                            left: particle.left,
+                            top: particle.top,
                         }}
                         animate={{
                             y: [0, -100],
                             opacity: [0, 1, 0],
                         }}
                         transition={{
-                            duration: 2 + Math.random() * 2,
+                            duration: particle.duration,
                             repeat: Infinity,
-                            delay: Math.random() * 2,
+                            delay: particle.delay,
                             ease: "easeOut",
                         }}
                     />

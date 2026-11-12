@@ -18,7 +18,7 @@ export const CATEGORY_COLORS = {
   exploration: "#06b6d4",
   sports: "#84cc16",
   technology: "#0ea5e9",
-  selected: "#ffffff",
+  selected: "#a78bfa",
   Default: "#94a3b8",
 };
 

@@ -1,23 +1,8 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dice5, X } from "lucide-react";
+import { CATEGORY_COLORS as categoryColors } from "@/lib/category-colors";
 
-const categoryColors = {
-  war: "#ef4444",
-  political: "#8b5cf6",
-  cultural: "#f59e0b",
-  scientific: "#10b981",
-  religious: "#eab308",
-  disasters: "#f97316",
-  discoveries: "#3b82f6",
-  historical: "#ec4899",
-  economic: "#14b8a6",
-  social: "#f43f5e",
-  births: "#a78bfa",
-  deaths: "#6b7280",
-  events: "#22d3ee",
-  environmental: "#22c55e",
-};
 
 const AlternativeDrawer = ({
   isSlider,
@@ -111,6 +96,7 @@ const AlternativeDrawer = ({
                           src={event.thumbnail}
                           alt={event.title}
                           className="h-full w-full object-cover"
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
                         />
                       </div>
                     )}
@@ -121,7 +107,7 @@ const AlternativeDrawer = ({
                       </h3>
                       <div className="flex items-center justify-between mt-2">
                         <span className={`text-sm font-bold ${isDark ? "text-purple-400" : "text-purple-600"}`}>
-                          {event.year}
+                          {event.year ?? "—"}
                         </span>
                         <span
                           className="text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize"

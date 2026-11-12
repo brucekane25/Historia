@@ -21,41 +21,44 @@ const steps = [
     icon: <Map className="w-8 h-8 text-purple-400" />,
     title: "Map & Globe Views",
     description:
-      "Switch between a classic map view and an immersive 3D globe. On the globe, toggle between cluster bars (showing event density) and individual pins.",
+      "Switch between a fast clustered map and a live 3D globe. The globe renders events as glowing points, with an optional density heatmap and animated connection arcs.",
   },
   {
     icon: <BarChart3 className="w-8 h-8 text-purple-400" />,
-    title: "3D Cluster Bars",
+    title: "Explore the Live Globe",
     description:
-      "The globe shows 3D bars whose height indicates the number of events in each region. Hover to see a breakdown by category. Click to explore individual events.",
+      "Hover a point to preview an event, click to open it, and focus the camera on any selection. Use the Density, Arcs, Glow, and Pins controls to shape the view.",
   },
   {
     icon: <Compass className="w-8 h-8 text-purple-400" />,
-    title: "Filter & Explore",
+    title: "Filter & Search",
     description:
-      "Use the Tweaks panel to filter by year range and category. Search events by name in the navbar. Use the Random button to discover new events.",
+      "Use the Tweaks panel to filter by year range, categories, and page size. Search the full archive from the navbar or command palette, or hit Surprise Me for a random event.",
   },
   {
     icon: <Sparkles className="w-8 h-8 text-purple-400" />,
     title: "Ready to Explore!",
     description:
-      "Toggle dark mode, open the stats panel to see event distributions, and dive into history. Use the sidebar icons to access all features.",
+      "Save events with bookmarks, share links, open the stats panel, and switch themes. Press Ctrl/⌘ K anytime to jump anywhere.",
   },
 ];
 
-const Onboarding = ({ forceOpen, onClose }) => {
+const Onboarding = ({ forceOpen, onClose, lightMode = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const isDark = !lightMode;
 
   useEffect(() => {
     if (forceOpen) {
       setIsOpen(true);
       setStep(0);
+      sessionStorage.setItem("gloria_onboarding_active", "true");
       return;
     }
     const hasVisited = localStorage.getItem("gloria_onboarded_v3");
     if (!hasVisited) {
       setIsOpen(true);
+      sessionStorage.setItem("gloria_onboarding_active", "true");
       localStorage.setItem("gloria_onboarded_v3", "true");
     }
   }, [forceOpen]);
@@ -63,6 +66,7 @@ const Onboarding = ({ forceOpen, onClose }) => {
   const handleClose = () => {
     setIsOpen(false);
     setStep(0);
+    sessionStorage.removeItem("gloria_onboarding_active");
     if (onClose) onClose();
   };
 
@@ -78,21 +82,21 @@ const Onboarding = ({ forceOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className="sm:max-w-[440px] bg-[#0f1120] border border-white/10 text-white z-[1040]">
+      <DialogContent className={`sm:max-w-[440px] z-[1040] border ${isDark ? "bg-[#0f1120] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>
         <DialogHeader>
           <div className="flex flex-col items-center text-center pt-4">
             <div className="relative mb-4">
               {currentStep.icon}
               <div className="absolute inset-0 blur-xl bg-purple-500/20 rounded-full" />
             </div>
-            <DialogTitle className="text-xl font-bold text-white">
+            <DialogTitle className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
               {currentStep.title}
             </DialogTitle>
           </div>
         </DialogHeader>
 
         <div className="text-center px-4 pb-2">
-          <p className="text-sm text-white/60 leading-relaxed">
+          <p className={`text-sm leading-relaxed ${isDark ? "text-white/60" : "text-gray-500"}`}>
             {currentStep.description}
           </p>
         </div>
@@ -106,7 +110,7 @@ const Onboarding = ({ forceOpen, onClose }) => {
                 ? "w-6 bg-purple-500"
                 : i < step
                   ? "w-1.5 bg-purple-500/40"
-                  : "w-1.5 bg-white/10"
+                  : `w-1.5 ${isDark ? "bg-white/10" : "bg-black/10"}`
                 }`}
             />
           ))}
@@ -118,7 +122,7 @@ const Onboarding = ({ forceOpen, onClose }) => {
               <Button
                 variant="ghost"
                 onClick={handleClose}
-                className="text-white/40 hover:text-white hover:bg-white/5"
+                className={`${isDark ? "text-white/40 hover:text-white hover:bg-white/5" : "text-gray-400 hover:text-gray-900 hover:bg-black/5"}`}
               >
                 Skip
               </Button>

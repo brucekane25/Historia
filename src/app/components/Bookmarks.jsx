@@ -1,23 +1,9 @@
 "use client";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Bookmark, Trash2, Sparkles } from "lucide-react";
+import { X, Bookmark, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { CATEGORY_COLORS as categoryColors } from "@/lib/category-colors";
 
-const categoryColors = {
-    war: "#ef4444",
-    political: "#8b5cf6",
-    cultural: "#f59e0b",
-    scientific: "#10b981",
-    religious: "#eab308",
-    disasters: "#f97316",
-    discoveries: "#3b82f6",
-    historical: "#ec4899",
-    economic: "#14b8a6",
-    social: "#f43f5e",
-    births: "#a78bfa",
-    deaths: "#6b7280",
-    events: "#22d3ee",
-    environmental: "#22c55e",
-};
 
 const Bookmarks = ({
     isOpen,
@@ -29,7 +15,56 @@ const Bookmarks = ({
     onEventClick,
 }) => {
     const isDark = !lightMode;
-    const bookmarkedEvents = events.filter((e) => bookmarks.includes(e._id));
+    const [fetchedEvents, setFetchedEvents] = useState([]);
+    const [loadingSaved, setLoadingSaved] = useState(false);
+
+    const missingIds = useMemo(() => {
+        const loadedIds = new Set((events || []).map((event) => event._id));
+        return (bookmarks || []).filter((id) => !loadedIds.has(id));
+    }, [bookmarks, events]);
+    const missingKey = missingIds.join(",");
+
+    useEffect(() => {
+        if (!isOpen || missingKey === "") {
+            if (missingKey === "") setFetchedEvents([]);
+            setLoadingSaved(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        setLoadingSaved(true);
+
+        const loadSavedEvents = async () => {
+            try {
+                const res = await fetch(
+                    `/api/events/ids?ids=${encodeURIComponent(missingKey)}`,
+                    { signal: controller.signal }
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!controller.signal.aborted) {
+                    setFetchedEvents(data.events || []);
+                }
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    console.error("Failed to load bookmarked events:", error);
+                }
+            } finally {
+                if (!controller.signal.aborted) setLoadingSaved(false);
+            }
+        };
+
+        loadSavedEvents();
+        return () => controller.abort();
+    }, [isOpen, missingKey]);
+
+    const bookmarkedEvents = useMemo(() => {
+        const byId = new Map();
+        [...fetchedEvents, ...(events || [])].forEach((event) => {
+            byId.set(event._id, event);
+        });
+        return (bookmarks || []).map((id) => byId.get(id)).filter(Boolean);
+    }, [bookmarks, events, fetchedEvents]);
 
     return (
         <AnimatePresence>
@@ -117,7 +152,14 @@ const Bookmarks = ({
 
                         {/* Content */}
                         <div className="px-4 pb-4 overflow-y-auto flex-1">
-                            {bookmarkedEvents.length === 0 ? (
+                            {loadingSaved && bookmarkedEvents.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-48 gap-3">
+                                    <Loader2 className={`w-6 h-6 animate-spin ${isDark ? "text-yellow-400" : "text-yellow-600"}`} />
+                                    <p className={`text-sm font-medium ${isDark ? "text-white/40" : "text-gray-500"}`}>
+                                        Loading saved events…
+                                    </p>
+                                </div>
+                            ) : bookmarkedEvents.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-48 gap-3">
                                     <Bookmark
                                         className={`w-12 h-12 ${isDark ? "text-white/10" : "text-gray-200"}`}
@@ -126,7 +168,7 @@ const Bookmarks = ({
                                         No bookmarks yet
                                     </p>
                                     <p className={`text-xs text-center ${isDark ? "text-white/20" : "text-gray-300"}`}>
-                                        Click the star on any event to save it
+                                        Click the bookmark button on any event to save it
                                     </p>
                                 </div>
                             ) : (
@@ -173,7 +215,7 @@ const Bookmarks = ({
                                                         </h3>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <span className={`text-xs font-bold ${isDark ? "text-purple-400" : "text-purple-600"}`}>
-                                                                {event.year}
+                                                                {event.year ?? "—"}
                                                             </span>
                                                             <span
                                                                 className="text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize"
@@ -193,7 +235,7 @@ const Bookmarks = ({
                                                             e.stopPropagation();
                                                             toggleBookmark(event._id);
                                                         }}
-                                                        className={`opacity-0 group-hover:opacity-100 transition-all w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 hover:scale-105 ${isDark
+                                                        className={`opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 hover:scale-105 ${isDark
                                                             ? "text-white/40 hover:text-red-400 hover:bg-red-500/10"
                                                             : "text-gray-400 hover:text-red-500 hover:bg-red-50"
                                                             }`}

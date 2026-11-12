@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 const RightSliders = ({
   pages,
@@ -14,6 +14,7 @@ const RightSliders = ({
   limit,
   filterTotalEvents,
   totalEvents,
+  isLoading,
 }) => {
   const isDark = !lightMode;
   const [sliderValue, setSliderValue] = useState(limit);
@@ -35,7 +36,7 @@ const RightSliders = ({
   };
 
   return (
-    <div className="space-y-4 w-full">
+    <div className="space-y-4 w-full" aria-busy={isLoading}>
       {/* Events Per Page */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -72,7 +73,7 @@ const RightSliders = ({
         <Button
           variant="outline"
           size="sm"
-          disabled={currentPage === 1}
+          disabled={currentPage === 1 || isLoading}
           onClick={() => setCurrentPage((p) => p - 1)}
           className={`rounded-lg ${isDark
             ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
@@ -88,7 +89,7 @@ const RightSliders = ({
         <Button
           variant="outline"
           size="sm"
-          disabled={currentPage === pages}
+          disabled={currentPage === pages || isLoading}
           onClick={() => setCurrentPage((p) => p + 1)}
           className={`rounded-lg ${isDark
             ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
@@ -105,8 +106,9 @@ const RightSliders = ({
         <span className={isDark ? "text-white/30" : "text-gray-400"}>
           Total: <strong className={isDark ? "text-white/60" : "text-gray-600"}>{totalEvents?.toLocaleString()}</strong>
         </span>
-        <span className={isDark ? "text-white/30" : "text-gray-400"}>
+        <span className={`flex items-center gap-1 ${isDark ? "text-white/30" : "text-gray-400"}`}>
           Showing: <strong className={isDark ? "text-purple-400" : "text-purple-600"}>{filterTotalEvents?.toLocaleString()}</strong>
+          {isLoading && <Loader2 className="w-3 h-3 animate-spin" aria-label="Loading" />}
         </span>
       </div>
     </div>

@@ -6,11 +6,11 @@ import Navbart from "./components/Navbart";
 import categorizeEvents from "./components/CategoriseEvents";
 import AlternativeDrawer from "./components/AlternativeDrawer";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { FULL_YEAR_RANGE } from "@/lib/history-range";
 import { Button } from "@/components/ui/button";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Search } from "lucide-react";
 
 import BottomAppBar from "./components/BottomBar";
-import VerticalSlider from "./components/VerticalSlider";
 import LeftDrawer from "./components/LeftDrawer";
 import SettingsPanel from "./components/SettingsPanel";
 import SettingsIcons from "./components/SettingsIcons";
@@ -31,8 +31,19 @@ const GlobeComponent = dynamic(() => import("./components/GlobeComponent"), {
   ssr: false,
 });
 
+// These database categories survive client-side topic classification unchanged,
+// so filtering them can happen across the whole archive instead of only the
+// currently loaded page. Generic "events" rows are reclassified into topics.
+const SERVER_FILTERABLE_CATEGORIES = new Set([
+  "selected",
+  "holidays",
+  "births",
+  "deaths",
+]);
+
 export default function Home() {
   const [events, setEvents] = useState([]);
+  const [categorizedEvents, setCategorizedEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [limit, setLimit] = useState(2200);
@@ -41,20 +52,29 @@ export default function Home() {
   const [totalEvents, setTotalEvents] = useState(null);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [filterTotalEvents, setFilterTotalEvents] = useState(null);
-  const [yearRange, setYearRange] = useState({
-    startYear: -479,
-    endYear: 2000,
-  });
+  const [yearRange, setYearRange] = useState(() => ({ ...FULL_YEAR_RANGE }));
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [detailEvent, setDetailEvent] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [leftOpen, setLeftOpen] = useState(false);
   const [isSlider, setIsSlider] = useState(false);
-  const [country, setCountry] = useState();
   const [lightMode, setLightMode] = useState(false); // Default to dark mode
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("map"); // Default to map view
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [skipCategoryFilter, setSkipCategoryFilter] = useState(false);
+
+  const serverCategoryQuery =
+    selectedCategory.length > 0 &&
+    selectedCategory.every((category) =>
+      SERVER_FILTERABLE_CATEGORIES.has(category)
+    )
+      ? selectedCategory.join(",")
+      : "";
+  const serverCategoryQueryRef = useRef("");
+  serverCategoryQueryRef.current = serverCategoryQuery;
   
   // New states
   const [showTutorial, setShowTutorial] = useState(false);
@@ -62,21 +82,26 @@ export default function Home() {
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [globeLoading, setGlobeLoading] = useState(false);
-  const sharedEventIdRef = useRef(null);
 
-  // Bookmarks — persisted in localStorage
-  const [bookmarks, setBookmarks] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return JSON.parse(localStorage.getItem("gloria_bookmarks") || "[]");
-      } catch { return []; }
-    }
-    return [];
-  });
+  // Bookmarks — persisted in localStorage after hydration.
+  const [bookmarks, setBookmarks] = useState([]);
+  const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("gloria_bookmarks", JSON.stringify(bookmarks));
-  }, [bookmarks]);
+    try {
+      const stored = JSON.parse(localStorage.getItem("gloria_bookmarks") || "[]");
+      if (Array.isArray(stored)) setBookmarks(stored);
+    } catch {
+      // Ignore malformed storage and start with an empty list.
+    }
+    setBookmarksLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (bookmarksLoaded) {
+      localStorage.setItem("gloria_bookmarks", JSON.stringify(bookmarks));
+    }
+  }, [bookmarks, bookmarksLoaded]);
 
   const toggleBookmark = useCallback((eventId) => {
     setBookmarks((prev) =>
@@ -103,32 +128,84 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Share URL: read ?event= param on load
+  // Share URL: load the event by ID so links work even outside the current page.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("event");
-    if (eventId) {
-      // We'll try to select it once events load
-      sharedEventIdRef.current = eventId;
-    }
-  }, []);
+    if (!eventId) return;
 
-  // Apply shared event ID after events load
-  useEffect(() => {
-    if (events.length > 0 && sharedEventIdRef.current) {
-      const shared = events.find((e) => e._id === sharedEventIdRef.current);
-      if (shared) {
-        setSelectedEvent(shared);
-        setDetailEvent(shared);
+    const controller = new AbortController();
+
+    const loadSharedEvent = async () => {
+      try {
+        const res = await fetch(`/api/events/id/${eventId}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const event = await res.json();
+        if (event?._id) {
+          setSelectedEvent(event);
+          setDetailEvent(event);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Failed to load shared event:", err);
+        }
       }
-      sharedEventIdRef.current = null;
-    }
-  }, [events]);
+    };
+
+    loadSharedEvent();
+    return () => controller.abort();
+  }, []);
 
   // Select an event: fly to it on map AND show the detail modal
   const handleEventSelect = useCallback((event) => {
     setSelectedEvent(event);
     setDetailEvent(event);
+  }, []);
+
+  const handleViewChange = useCallback(
+    (nextView) => {
+      if (nextView === "globe" && viewMode !== "globe") {
+        setGlobeLoading(true);
+      }
+      if (nextView === "map") {
+        setGlobeLoading(false);
+      }
+      setViewMode(nextView);
+    },
+    [viewMode]
+  );
+
+  const handleLimitChange = useCallback((value) => {
+    setCurrentPage(1);
+    setLimit(value);
+  }, []);
+
+  const handleYearRangeChange = useCallback((nextRange) => {
+    setCurrentPage(1);
+    setYearRange(nextRange);
+    setSelectedEvent(null);
+    setDetailEvent(null);
+  }, []);
+
+  const handleCategoryChange = useCallback((categories) => {
+    const nextServerQuery =
+      categories.length > 0 &&
+      categories.every((category) => SERVER_FILTERABLE_CATEGORIES.has(category))
+        ? categories.join(",")
+        : "";
+
+    // Archive-backed filters need a request. Keep the current map visible
+    // until that response arrives instead of flashing an empty view.
+    setSkipCategoryFilter(
+      Boolean(nextServerQuery) &&
+        nextServerQuery !== serverCategoryQueryRef.current
+    );
+    setCurrentPage(1);
+    setSelectedCategory(categories);
+    setSelectedEvent(null);
+    setDetailEvent(null);
   }, []);
 
   // Surprise Me: fetch a random event from the API
@@ -176,47 +253,96 @@ export default function Home() {
   }, [events, randomizeEvents]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchData = async () => {
       setIsLoading(true);
-      const data = await fetchEventsWithCoordinates(
-        currentPage,
-        limit,
-        yearRange.startYear,
-        yearRange.endYear
-      );
-      if (data) {
-        const categorizedEvents = await categorizeEvents(data.events);
+      setLoadError(null);
 
-        const filterEvents =
-          selectedCategory.length > 0
-            ? categorizedEvents.filter((event) =>
-                selectedCategory.includes(event.category)
-              )
-            : categorizedEvents;
+      try {
+        const data = await fetchEventsWithCoordinates(
+          currentPage,
+          limit,
+          yearRange.startYear,
+          yearRange.endYear,
+          serverCategoryQuery,
+          controller.signal
+        );
 
-        setEvents(filterEvents);
-        setPages(data.totalPages);
+        if (controller.signal.aborted) return;
+
+        if (!data) {
+          setLoadError("Could not load events. Check the connection and try again.");
+          return;
+        }
+
+        const totalPages = Math.max(1, data.totalPages || 1);
+        if (currentPage > totalPages) {
+          setSkipCategoryFilter(false);
+          setCurrentPage(totalPages);
+          return;
+        }
+
+        const categorized = await categorizeEvents(data.events);
+
+        setCategorizedEvents(categorized);
+        setPages(totalPages);
         setTotalEvents(data.totalEvents);
-        setFilterTotalEvents(filterEvents.length);
+        setSkipCategoryFilter(false);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Error loading events:", error);
+          setLoadError("Could not load events. Check the connection and try again.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+          setSkipCategoryFilter(false);
+        }
       }
-      setIsLoading(false);
     };
+
     fetchData();
     setSelectedEvent(null);
-  }, [currentPage, yearRange, selectedCategory, limit]);
+
+    return () => controller.abort();
+  }, [currentPage, yearRange, limit, retryCount, serverCategoryQuery]);
+
+  // Category filtering is instant for loaded events. While an archive-backed
+  // category request is in flight, keep the current map visible instead of
+  // blanking it out.
+  useEffect(() => {
+    if (skipCategoryFilter) return;
+
+    const filtered =
+      selectedCategory.length > 0
+        ? categorizedEvents.filter((event) =>
+            selectedCategory.includes(event.category)
+          )
+        : categorizedEvents;
+
+    setEvents(filtered);
+    setFilterTotalEvents(filtered.length);
+  }, [categorizedEvents, selectedCategory, skipCategoryFilter]);
 
   const fetchEventsWithCoordinates = async (
     page,
     limit,
     startYear,
-    endYear
+    endYear,
+    category,
+    signal
   ) => {
     try {
       const params = new URLSearchParams({ page, limit, startYear, endYear });
-      const response = await fetch(`/api/events/coordinates?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch');
+      if (category) params.set("category", category);
+      const response = await fetch(`/api/events/coordinates?${params}`, {
+        signal,
+      });
+      if (!response.ok) throw new Error(`Request failed: ${response.status}`);
       return await response.json();
     } catch (error) {
+      if (error.name === "AbortError") throw error;
       console.error("Error fetching events with coordinates:", error);
       return null;
     }
@@ -229,8 +355,9 @@ export default function Home() {
       <Onboarding
         forceOpen={showTutorial}
         onClose={() => setShowTutorial(false)}
+        lightMode={lightMode}
       />
-      <WhatsNew />
+      <WhatsNew lightMode={lightMode} />
 
       {/* Event Detail Modal */}
       <EventDetailModal
@@ -242,6 +369,7 @@ export default function Home() {
         onFlyToEvent={(e) => {
           setSelectedEvent(e);
           setDetailEvent(null);
+          handleViewChange("map");
         }}
       />
 
@@ -254,11 +382,12 @@ export default function Home() {
         setLightMode={setLightMode}
         setSelectedEvent={handleEventSelect}
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        onViewChange={handleViewChange}
         setSettingsOpen={setSettingsOpen}
         setStatsOpen={setStatsOpen}
         setLeftOpen={setLeftOpen}
         setBookmarksOpen={setBookmarksOpen}
+        onSurpriseMe={handleSurpriseMe}
       />
 
       {/* Bookmarks Panel */}
@@ -282,7 +411,7 @@ export default function Home() {
 
       {/* Loading Screen */}
       <AnimatePresence>
-        {isLoading && events.length === 0 && <LoadingScreen isDark={isDark} />}
+        {isLoading && events.length === 0 && <LoadingScreen lightMode={lightMode} />}
       </AnimatePresence>
 
       {/* Mobile Vertical Slider (removed dead mobileSlider usage) */}
@@ -330,10 +459,8 @@ export default function Home() {
                 setIsOpen={setIsOpen}
                 lightMode={lightMode}
                 setLightMode={setLightMode}
-                setCountry={setCountry}
                 viewMode={viewMode}
-                setViewMode={setViewMode}
-                setGlobeLoading={setGlobeLoading}
+                onViewChange={handleViewChange}
                 events={events}
               />
             </div>
@@ -348,11 +475,34 @@ export default function Home() {
               lightMode={lightMode}
               setLightMode={setLightMode}
               viewMode={viewMode}
-              setViewMode={setViewMode}
-              setGlobeLoading={setGlobeLoading}
+              onViewChange={handleViewChange}
               setBookmarksOpen={setBookmarksOpen}
+              bookmarksOpen={bookmarksOpen}
+              setCommandPaletteOpen={setCommandPaletteOpen}
               onSurpriseMe={handleSurpriseMe}
             />
+          )}
+
+          {/* Mobile search — the navbar is desktop-only. */}
+          {!isDesktop && (
+            <button
+              type="button"
+              onClick={() => setCommandPaletteOpen(true)}
+              title="Search events"
+              aria-label="Search events"
+              className={`fixed left-4 top-4 z-[1025] flex h-10 w-10 items-center justify-center rounded-xl shadow-2xl backdrop-blur-xl transition-transform hover:scale-105 ${
+                isDark
+                  ? "glass-dark text-white/65 hover:text-white"
+                  : "glass text-gray-600 hover:text-gray-900"
+              }`}
+              style={{
+                border: isDark
+                  ? "1px solid rgba(255,255,255,0.08)"
+                  : "1px solid rgba(0,0,0,0.06)",
+              }}
+            >
+              <Search className="h-4 w-4" />
+            </button>
           )}
 
           {/* Desktop Settings Icons (Floating Dock) */}
@@ -375,6 +525,8 @@ export default function Home() {
 
           {/* Settings Panel */}
           <div
+            aria-hidden={!settingsOpen}
+            inert={settingsOpen ? undefined : true}
             className={`absolute panel-cont transition-opacity duration-500 ease-in-out 
               ${settingsOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
               ${
@@ -387,7 +539,7 @@ export default function Home() {
               isDesktop={isDesktop}
               setSelectedEvent={setSelectedEvent}
               yearRange={yearRange}
-              setLimit={setLimit}
+              setLimit={handleLimitChange}
               setSettingsOpen={setSettingsOpen}
               pages={pages}
               currentPage={currentPage}
@@ -395,25 +547,22 @@ export default function Home() {
               limit={limit}
               filterTotalEvents={filterTotalEvents}
               totalEvents={totalEvents}
-              setYearRange={setYearRange}
+              isLoading={isLoading}
+              setYearRange={handleYearRangeChange}
               selectedCategory={selectedCategory}
-              country={country}
-              setCountry={setCountry}
-              setSelectedCategory={setSelectedCategory}
+              setSelectedCategory={handleCategoryChange}
               lightMode={lightMode}
               onShowTutorial={() => setShowTutorial(true)}
             />
           </div>
           
            {/* Event Stats Panel */}
-           <div className={`absolute top-20 right-5 z-[1030] hidden lg:block`}>
-            <EventStats
+           <EventStats
               isOpen={statsOpen}
               onClose={() => setStatsOpen(false)}
               events={events}
               lightMode={lightMode}
             />
-          </div>
 
           {/* Random Events Drawers */}
           {isDesktop ? (
@@ -438,6 +587,26 @@ export default function Home() {
 
           {/* Main View — Map or Globe */}
           <div className="relative h-full w-full">
+            {loadError && (
+              <div className="pointer-events-none absolute inset-x-4 top-24 z-[1005] flex justify-center px-2">
+                <div
+                  className={`pointer-events-auto flex max-w-lg items-center gap-3 rounded-2xl px-4 py-3 text-sm shadow-2xl backdrop-blur-xl ${
+                    isDark
+                      ? "border border-red-400/20 bg-[#170d14]/95 text-red-100"
+                      : "border border-red-200 bg-white/95 text-red-700"
+                  }`}
+                >
+                  <span className="min-w-0 flex-1">{loadError}</span>
+                  <Button
+                    size="sm"
+                    onClick={() => setRetryCount((value) => value + 1)}
+                    className="shrink-0 rounded-xl bg-red-500 text-white hover:bg-red-400"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            )}
             <AnimatePresence mode="wait">
               {viewMode === "map" ? (
                 <motion.div

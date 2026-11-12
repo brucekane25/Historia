@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Event from '@/app/models/Event';
+import mongoose from 'mongoose';
 
 // Gloria serves this API from its own Node runtime; never pre-render it.
 export const dynamic = "force-dynamic";
@@ -14,23 +15,33 @@ export async function GET(request) {
 
     const lat = parseFloat(searchParams.get('lat'));
     const lon = parseFloat(searchParams.get('lon'));
-    const radius = parseFloat(searchParams.get('radius') || '5');
+    const rawRadius = parseFloat(searchParams.get('radius') || '5');
+    const radius = Number.isFinite(rawRadius)
+      ? Math.min(Math.max(rawRadius, 0.1), 90)
+      : 5;
     const excludeId = searchParams.get('excludeId');
 
-    if (isNaN(lat) || isNaN(lon)) {
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lon) ||
+      lat < -90 ||
+      lat > 90 ||
+      lon < -180 ||
+      lon > 180
+    ) {
       return NextResponse.json(
-        { error: 'lat and lon query parameters are required' },
+        { error: 'Valid lat and lon query parameters are required' },
         { status: 400 }
       );
     }
 
+    const match = { coordinates: { $ne: null } };
+    if (excludeId && mongoose.Types.ObjectId.isValid(excludeId)) {
+      match._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
+    }
+
     const pipeline = [
-      {
-        $match: {
-          coordinates: { $ne: null },
-          ...(excludeId ? { _id: { $ne: new (await import('mongoose')).default.Types.ObjectId(excludeId) } } : {}),
-        },
-      },
+      { $match: match },
       {
         $addFields: {
           distance: {
