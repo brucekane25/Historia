@@ -1,922 +1,1479 @@
 "use client";
-import React, { useRef, useMemo, useState, useCallback, useEffect } from "react";
+
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { OrbitControls, Stars, Html } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import {
+  Html,
+  Line,
+  OrbitControls,
+  Stars,
+  useProgress,
+} from "@react-three/drei";
+import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import * as THREE from "three";
+import {
+  Flame,
+  Network,
+  Pause,
+  Play,
+  RotateCcw,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { getCategoryColor } from "@/lib/category-colors";
 
-// ===== Atmosphere Shader =====
-const atmosphereVertexShader = `
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  
-  void main() {
-    vNormal = normalize(normalMatrix * normal);
-    vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
+// ===== Constants =====
+const EARTH_RADIUS = 1;
+const PIN_RADIUS = 1.006;
+const AUTO_ROTATE_SPEED = 0.055;
+const ARC_COLORS = ["#22d3ee", "#a78bfa", "#f59e0b", "#34d399", "#fb7185"];
 
-const atmosphereFragmentShader = `
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  uniform vec3 glowColor;
-  uniform float intensity;
-  
-  void main() {
-    vec3 viewDirection = normalize(-vPosition);
-    float fresnel = pow(1.0 - abs(dot(viewDirection, vNormal)), 3.0);
-    fresnel = clamp(fresnel, 0.0, 1.0);
-    vec3 color = glowColor * fresnel * intensity;
-    gl_FragColor = vec4(color, fresnel * intensity * 0.8);
-  }
-`;
-
-// ===== Globe Surface Shader for better lighting =====
-const globeVertexShader = `
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  varying vec3 vWorldPosition;
-  
-  void main() {
-    vUv = uv;
-    vNormal = normalize(normalMatrix * normal);
-    vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-    vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const globeFragmentShader = `
-  uniform sampler2D dayTexture;
-  uniform sampler2D nightTexture;
-  uniform sampler2D bumpTexture;
-  uniform float isDark;
-  uniform vec3 lightDirection;
-  
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  varying vec3 vWorldPosition;
-  
-  void main() {
-    vec3 normal = normalize(vNormal);
-    vec3 lightDir = normalize(lightDirection);
-    
-    // Day/night mixing based on light direction
-    float dayNight = dot(normal, lightDir);
-    dayNight = smoothstep(-0.2, 0.3, dayNight);
-    
-    vec4 dayColor = texture2D(dayTexture, vUv);
-    vec4 nightColor = texture2D(nightTexture, vUv);
-    
-    // Apply bump mapping
-    float bump = texture2D(bumpTexture, vUv).r;
-    vec3 bumpNormal = normalize(normal + vec3(bump * 0.05));
-    
-    // Lighting
-    float diffuse = max(dot(bumpNormal, lightDir), 0.0);
-    float ambient = 0.15;
-    
-    vec3 finalDay = dayColor.rgb * (diffuse + ambient);
-    vec3 finalNight = nightColor.rgb * 0.8;
-    
-    vec3 finalColor = mix(finalNight, finalDay, dayNight);
-    
-    // Add specular highlight
-    vec3 viewDir = normalize(-vPosition);
-    vec3 halfDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(bumpNormal, halfDir), 0.0), 32.0);
-    finalColor += vec3(spec * 0.2) * dayNight;
-    
-    gl_FragColor = vec4(finalColor, 1.0);
-  }
-`;
-
-// ===== Utilities =====
-function latLonToVector3(lat, lon, radius = 1.01) {
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lon + 180) * (Math.PI / 180);
-    const x = -(radius * Math.sin(phi) * Math.cos(theta));
-    const z = radius * Math.sin(phi) * Math.sin(theta);
-    const y = radius * Math.cos(phi);
-    return new THREE.Vector3(x, y, z);
+function latLonToVector3(lat, lon, radius = PIN_RADIUS) {
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lon + 180) * (Math.PI / 180);
+  const x = -(radius * Math.sin(phi) * Math.cos(theta));
+  const z = radius * Math.sin(phi) * Math.sin(theta);
+  const y = radius * Math.cos(phi);
+  return new THREE.Vector3(x, y, z);
 }
 
-const categoryColors = {
-    war: "#ef4444",
-    political: "#8b5cf6",
-    cultural: "#f59e0b",
-    scientific: "#10b981",
-    religious: "#eab308",
-    disasters: "#f97316",
-    discoveries: "#3b82f6",
-    historical: "#ec4899",
-    economic: "#14b8a6",
-    social: "#f43f5e",
-    births: "#a78bfa",
-    deaths: "#6b7280",
-    events: "#22d3ee",
-    environmental: "#22c55e",
-    selected: "#ffffff",
-    Default: "#6b7280",
-};
+function greatCircleArc(latA, lonA, latB, lonB, radius = PIN_RADIUS, lift = 0.05, segments = 64) {
+  const start = latLonToVector3(latA, lonA, 1);
+  const end = latLonToVector3(latB, lonB, 1);
+  const angle = start.angleTo(end);
+  const points = [];
 
-function getCategoryColor(category) {
-    return categoryColors[category?.toLowerCase()] || categoryColors.Default;
+  if (angle < 0.0001 || !Number.isFinite(angle)) {
+    return [start.clone().multiplyScalar(radius), end.clone().multiplyScalar(radius)];
+  }
+
+  const sinAngle = Math.sin(angle);
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    const a = Math.sin((1 - t) * angle) / sinAngle;
+    const b = Math.sin(t * angle) / sinAngle;
+    const point = start
+      .clone()
+      .multiplyScalar(a)
+      .add(end.clone().multiplyScalar(b))
+      .normalize()
+      .multiplyScalar(radius * (1 + Math.sin(Math.PI * t) * lift));
+    points.push(point);
+  }
+  return points;
 }
 
-// ===== Custom Atmosphere Component =====
+function makeGlowTexture() {
+  const size = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2
+  );
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.22, "rgba(255,255,255,0.72)");
+  gradient.addColorStop(0.55, "rgba(255,255,255,0.16)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// ===== Atmosphere =====
 function Atmosphere({ isDark }) {
-    const meshRef = useRef();
-    const glowColor = isDark ? new THREE.Color("#6366f1") : new THREE.Color("#818cf8");
-    
-    const material = useMemo(() => {
-        return new THREE.ShaderMaterial({
-            vertexShader: atmosphereVertexShader,
-            fragmentShader: atmosphereFragmentShader,
-            uniforms: {
-                glowColor: { value: glowColor },
-                intensity: { value: isDark ? 1.5 : 1.0 }
-            },
-            transparent: true,
-            side: THREE.BackSide,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-        });
-    }, [isDark, glowColor]);
-    
-    useFrame(() => {
-        if (meshRef.current) {
-            meshRef.current.rotation.y += 0.0003;
+  const material = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          gl_Position = projectionMatrix * mvPosition;
         }
-    });
-    
-    return (
-        <mesh ref={meshRef} scale={[1.12, 1.12, 1.12]}>
-            <sphereGeometry args={[1, 64, 64]} />
-            <primitive object={material} attach="material" />
-        </mesh>
-    );
-}
-
-// ===== Outer Glow Ring =====
-function GlowRing({ isDark }) {
-    const ringRef = useRef();
-    const glowColor = isDark ? new THREE.Color("#8b5cf6") : new THREE.Color("#6366f1");
-    
-    const material = useMemo(() => {
-        return new THREE.ShaderMaterial({
-            vertexShader: `
-                varying vec2 vUv;
-                varying vec3 vPosition;
-                void main() {
-                    vUv = uv;
-                    vPosition = position;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                varying vec2 vUv;
-                varying vec3 vPosition;
-                uniform vec3 glowColor;
-                uniform float time;
-                
-                void main() {
-                    float dist = length(vPosition.xy);
-                    float ring = smoothstep(0.95, 1.0, dist) * smoothstep(1.1, 1.0, dist);
-                    float pulse = 0.8 + sin(time * 2.0) * 0.2;
-                    gl_FragColor = vec4(glowColor, ring * pulse * 0.6);
-                }
-            `,
-            uniforms: {
-                glowColor: { value: glowColor },
-                time: { value: 0 }
-            },
-            transparent: true,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-        });
-    }, [isDark, glowColor]);
-    
-    useFrame(({ clock }) => {
-        if (ringRef.current) {
-            ringRef.current.material.uniforms.time.value = clock.getElapsedTime();
-            ringRef.current.rotation.z += 0.001;
+      `,
+      fragmentShader: `
+        uniform vec3 uInner;
+        uniform vec3 uOuter;
+        uniform float uIntensity;
+        uniform float uTime;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        void main() {
+          vec3 normal = normalize(vNormal);
+          vec3 viewDir = normalize(vViewPosition);
+          float rim = pow(1.0 - abs(dot(normal, viewDir)), 3.0);
+          float pulse = 0.92 + 0.08 * sin(uTime * 1.4);
+          vec3 color = mix(uInner, uOuter, rim);
+          gl_FragColor = vec4(color, rim * uIntensity * pulse);
         }
-    });
-    
-    return (
-        <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[1.15, 1.35, 64]} />
-            <primitive object={material} attach="material" />
-        </mesh>
-    );
-}
-
-// ===== World Borders (GeoJSON) =====
-function WorldBorders({ isDark }) {
-    const [lines, setLines] = useState([]);
-
-    useEffect(() => {
-        fetch("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson")
-            .then((res) => res.json())
-            .then((data) => {
-                const newLines = [];
-                const radius = 1.002; // Slightly above globe surface
-
-                data.features.forEach((feature) => {
-                    const geometry = feature.geometry;
-
-                    const processPolygon = (coords) => {
-                        const points = [];
-                        coords.forEach(([lon, lat]) => {
-                            points.push(latLonToVector3(lat, lon, radius));
-                        });
-                        // Close the loop
-                        points.push(points[0]);
-                        newLines.push(points);
-                    };
-
-                    if (geometry.type === "Polygon") {
-                        geometry.coordinates.forEach((ring) => processPolygon(ring));
-                    } else if (geometry.type === "MultiPolygon") {
-                        geometry.coordinates.forEach((polygon) => {
-                            polygon.forEach((ring) => processPolygon(ring));
-                        });
-                    }
-                });
-                setLines(newLines);
-            })
-            .catch((err) => console.error("Failed to load borders:", err));
-    }, []);
-
-    const material = useMemo(
-        () =>
-            new THREE.LineBasicMaterial({
-                color: isDark ? "#4b5563" : "#9ca3af",
-                transparent: true,
-                opacity: isDark ? 0.3 : 0.4,
-            }),
-        [isDark]
-    );
-
-    return (
-        <group>
-            {lines.map((points, i) => {
-                const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                return <line key={i} geometry={geometry} material={material} />;
-            })}
-        </group>
-    );
-}
-
-// ===== Globe with Earth Texture =====
-function Globe({ isDark }) {
-    const cloudsRef = useRef();
-    const globeRef = useRef();
-    
-    const dayTexture = useLoader(THREE.TextureLoader, "/textures/earth-day.jpg");
-    const nightTexture = useLoader(THREE.TextureLoader, "/textures/earth-night.jpg");
-    const bumpTexture = useLoader(THREE.TextureLoader, "/textures/earth-bump.png");
-    
-    dayTexture.wrapS = dayTexture.wrapT = THREE.RepeatWrapping;
-    nightTexture.wrapS = nightTexture.wrapT = THREE.RepeatWrapping;
-    
-    const lightDirection = useMemo(() => new THREE.Vector3(5, 3, 5).normalize(), []);
-    const atmosphereColor = isDark ? "#6366f1" : "#818cf8";
-    
-    const globeMaterial = useMemo(() => {
-        return new THREE.ShaderMaterial({
-            vertexShader: globeVertexShader,
-            fragmentShader: globeFragmentShader,
-            uniforms: {
-                dayTexture: { value: dayTexture },
-                nightTexture: { value: nightTexture },
-                bumpTexture: { value: bumpTexture },
-                isDark: { value: isDark ? 1.0 : 0.0 },
-                lightDirection: { value: lightDirection },
-            },
-        });
-    }, [dayTexture, nightTexture, bumpTexture, isDark, lightDirection]);
-    
-    useFrame((_, delta) => {
-        if (cloudsRef.current) {
-            cloudsRef.current.rotation.y += delta * 0.008;
-        }
-        if (globeRef.current) {
-            globeRef.current.rotation.y += delta * 0.001;
-        }
-    });
-    
-    return (
-        <group>
-            {/* Main earth globe */}
-            <mesh ref={globeRef}>
-                <sphereGeometry args={[1, 64, 64]} />
-                <primitive object={globeMaterial} attach="material" />
-            </mesh>
-            
-            {/* Country Borders */}
-            <WorldBorders isDark={isDark} />
-            
-            {/* Cloud layer with subtle animation */}
-            <mesh ref={cloudsRef}>
-                <sphereGeometry args={[1.008, 48, 48]} />
-                <meshBasicMaterial
-                    color="#ffffff"
-                    transparent
-                    opacity={isDark ? 0.05 : 0.12}
-                    wireframe
-                />
-            </mesh>
-            
-            {/* Atmosphere glow */}
-            <Atmosphere isDark={isDark} />
-            
-            {/* Outer glow ring */}
-            <GlowRing isDark={isDark} />
-        </group>
-    );
-}
-
-// ===== Heatmap Mesh (Peaks & Valleys) =====
-function HeatmapMesh({ events, maxPeakHeight = 0.3 }) { // maxPeakHeight scaled down for better visual
-
-    // Generate heatmap data once when events change
-    const { geometry } = useMemo(() => {
-        const width = 180; // Reduced Grid resolution W
-        const height = 90; // Reduced Grid resolution H
-        const grid = new Float32Array(width * height).fill(0);
-
-        // Populate grid
-        events.forEach(e => {
-            const x = Math.floor((e.coordinates.lon + 180) / 360 * width) % width;
-            const y = Math.floor((e.coordinates.lat + 90) / 180 * height);
-            const idx = y * width + x;
-            if (idx >= 0 && idx < grid.length) grid[idx] += 1;
-        });
-
-        // Properties for smoothing
-        const smoothedGrid = new Float32Array(width * height).fill(0);
-        const kernel = [
-            [0.05, 0.1, 0.05],
-            [0.1, 0.4, 0.1],
-            [0.05, 0.1, 0.05]
-        ];
-
-        // Blur
-        for (let y = 1; y < height - 1; y++) {
-            for (let x = 1; x < width - 1; x++) {
-                let sum = 0;
-                for (let ky = -1; ky <= 1; ky++) {
-                    for (let kx = -1; kx <= 1; kx++) {
-                        sum += grid[(y + ky) * width + (x + kx)] * kernel[ky + 1][kx + 1];
-                    }
-                }
-                smoothedGrid[y * width + x] = sum;
-            }
-        }
-
-        let maxVal = 0;
-        for (let i = 0; i < smoothedGrid.length; i++) maxVal = Math.max(maxVal, smoothedGrid[i]);
-
-        // Geometry generation - Reduced segments for performance
-        const segW = 72;
-        const segH = 72;
-        const geo = new THREE.SphereGeometry(1.01, segW, segH);
-        const posAttribute = geo.attributes.position;
-        const colorAttribute = new Float32Array(posAttribute.count * 3);
-        const vertexPos = new THREE.Vector3();
-
-        // Colors
-        const colorLow = new THREE.Color("#3b82f6");
-        const colorMid = new THREE.Color("#10b981");
-        const colorHigh = new THREE.Color("#ef4444");
-
-        for (let i = 0; i < posAttribute.count; i++) {
-            vertexPos.set(posAttribute.getX(i), posAttribute.getY(i), posAttribute.getZ(i));
-
-            const normalized = vertexPos.clone().normalize();
-            const u = 0.5 + Math.atan2(normalized.z, normalized.x) / (2 * Math.PI);
-            const v = 0.5 - Math.asin(normalized.y) / Math.PI;
-
-            // Sample grid
-            const gx = Math.floor(u * width) % width;
-            const gy = Math.floor(v * height);
-            const idx = gy * width + gx;
-            const val = smoothedGrid[idx] || 0;
-            const intensity = maxVal > 0 ? Math.min(val / (maxVal * 0.6), 1) : 0;
-
-            // Displace
-            if (intensity > 0.05) {
-                const displacement = intensity * maxPeakHeight;
-                const newPos = vertexPos.add(normalized.multiplyScalar(displacement));
-                posAttribute.setXYZ(i, newPos.x, newPos.y, newPos.z);
-            }
-
-            // Color
-            const color = new THREE.Color();
-            if (intensity < 0.05) {
-                color.setHex(0x000000);
-            } else if (intensity < 0.5) {
-                color.lerpColors(colorLow, colorMid, intensity * 2);
-            } else {
-                color.lerpColors(colorMid, colorHigh, (intensity - 0.5) * 2);
-            }
-
-            colorAttribute[i * 3] = color.r;
-            colorAttribute[i * 3 + 1] = color.g;
-            colorAttribute[i * 3 + 2] = color.b;
-        }
-
-        geo.setAttribute('color', new THREE.BufferAttribute(colorAttribute, 3));
-        return { geometry: geo };
-
-    }, [events, maxPeakHeight]);
-
-    // Custom shader material for transparency modulation
-    const material = useMemo(() => {
-        return new THREE.MeshBasicMaterial({
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-        });
-    }, []);
-
-    // Cleanup memory
-    useEffect(() => {
-        return () => {
-            geometry.dispose();
-            material.dispose();
-        };
-    }, [geometry, material]);
-
-    return <mesh geometry={geometry} material={material} />;
-}
-
-
-// ===== Individual Event Pin with Enhanced Effects =====
-function EventPin({ event, onPinClick, isSelected, isDark }) {
-    const pinRef = useRef();
-    const glowRef = useRef();
-    const ringRef = useRef();
-    const [hovered, setHovered] = useState(false);
-    const [scale, setScale] = useState(1);
-    
-    const position = useMemo(
-        () => latLonToVector3(event.coordinates.lat, event.coordinates.lon, 1.01),
-        [event.coordinates.lat, event.coordinates.lon]
-    );
-    
-    const color = useMemo(
-        () => getCategoryColor(event.category),
-        [event.category]
-    );
-    
-    useFrame((_, delta) => {
-        // Smooth scale animation
-        const targetScale = hovered || isSelected ? 2.5 : 1;
-        setScale(prev => prev + (targetScale - prev) * delta * 10);
-        
-        if (pinRef.current) {
-            pinRef.current.scale.setScalar(scale);
-            // Subtle pulsing animation
-            const pulse = 1 + Math.sin(Date.now() * 0.004) * 0.15;
-            pinRef.current.scale.multiplyScalar(pulse);
-        }
-        
-        if (glowRef.current) {
-            glowRef.current.material.opacity = 0.3 + Math.sin(Date.now() * 0.003) * 0.15;
-            glowRef.current.scale.setScalar(scale * 1.8);
-        }
-        
-        if (ringRef.current) {
-            ringRef.current.rotation.z += delta * 2;
-            ringRef.current.material.opacity = hovered || isSelected ? 0.6 : 0.2;
-        }
-    });
-    
-    return (
-        <group position={position}>
-            {/* Core pin */}
-            <mesh
-                ref={pinRef}
-                onPointerOver={(e) => {
-                    e.stopPropagation();
-                    setHovered(true);
-                    document.body.style.cursor = "pointer";
-                }}
-                onPointerOut={() => {
-                    setHovered(false);
-                    document.body.style.cursor = "auto";
-                }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onPinClick(event);
-                }}
-            >
-                <sphereGeometry args={[0.006, 12, 12]} />
-                <meshBasicMaterial color={color} />
-            </mesh>
-            
-            {/* Glow effect */}
-            <mesh ref={glowRef}>
-                <sphereGeometry args={[0.012, 12, 12]} />
-                <meshBasicMaterial 
-                    color={color} 
-                    transparent 
-                    opacity={0.3} 
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </mesh>
-            
-            {/* Animated ring for selected/hovered */}
-            {(hovered || isSelected) && (
-                <mesh ref={ringRef}>
-                    <ringGeometry args={[0.015, 0.022, 32]} />
-                    <meshBasicMaterial 
-                        color={color} 
-                        transparent 
-                        opacity={0.5}
-                        blending={THREE.AdditiveBlending}
-                        side={THREE.DoubleSide}
-                        depthWrite={false}
-                    />
-                </mesh>
-            )}
-            
-            {/* Vertical beam for selected */}
-            {(hovered || isSelected) && (
-                <mesh position={[0, 0.03, 0]}>
-                    <cylinderGeometry args={[0.001, 0.003, 0.06, 8]} />
-                    <meshBasicMaterial 
-                        color={color} 
-                        transparent 
-                        opacity={0.4}
-                        blending={THREE.AdditiveBlending}
-                        depthWrite={false}
-                    />
-                </mesh>
-            )}
-            
-            {/* HTML Label on hover */}
-            {hovered && (
-                <Html
-                    position={[0, 0.04, 0]}
-                    center
-                    distanceFactor={4}
-                    style={{ pointerEvents: "none" }}
-                >
-                    <div
-                        className="px-3 py-2 rounded-lg shadow-2xl max-w-[220px] whitespace-nowrap animate-in fade-in zoom-in duration-200"
-                        style={{
-                            background: isDark 
-                                ? "rgba(15,17,30,0.95)" 
-                                : "rgba(255,255,255,0.95)",
-                            backdropFilter: "blur(16px)",
-                            border: isDark
-                                ? "1px solid rgba(139,92,246,0.3)"
-                                : "1px solid rgba(139,92,246,0.2)",
-                            boxShadow: isDark
-                                ? "0 8px 32px rgba(139,92,246,0.3)"
-                                : "0 8px 32px rgba(139,92,246,0.15)",
-                        }}
-                    >
-                        <p className="text-xs font-semibold text-white truncate" style={{ color: isDark ? "#fff" : "#1f2937" }}>
-                            {event.title}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                            <span className="text-[10px] font-bold" style={{ color: color }}>{event.year}</span>
-                            <span
-                                className="text-[9px] px-1.5 py-0.5 rounded-full"
-                                style={{
-                                    backgroundColor: color + "20",
-                                    color: color,
-                                }}
-                            >
-                                {event.category}
-                            </span>
-                        </div>
-                    </div>
-                </Html>
-            )}
-        </group>
-    );
-}
-
-// ===== Event Pins Group =====
-function EventPins({ events, onPinClick, selectedEvent, isDark }) {
-    const visibleEvents = useMemo(() => events.slice(0, 1200), [events]);
-    
-    return (
-        <group>
-            {visibleEvents.map((event) => (
-                <EventPin
-                    key={event._id}
-                    event={event}
-                    onPinClick={onPinClick}
-                    isSelected={selectedEvent?._id === event._id}
-                    isDark={isDark}
-                />
-            ))}
-        </group>
-    );
-}
-
-
-
-// ===== Category Legend =====
-function CategoryLegend({ isDark }) {
-    const topCategories = [
-        "war",
-        "political",
-        "scientific",
-        "cultural",
-        "historical",
-        "discoveries",
-        "births",
-        "deaths",
-    ];
-    
-    return (
-        <div
-            className={`absolute top-4 right-4 z-[1010] p-4 rounded-2xl transition-all duration-300 ${isDark ? "glass-dark" : "glass"}`}
-            style={{
-                border: isDark
-                    ? "1px solid rgba(139,92,246,0.2)"
-                    : "1px solid rgba(139,92,246,0.15)",
-                background: isDark
-                    ? "rgba(15,17,30,0.8)"
-                    : "rgba(255,255,255,0.8)",
-                backdropFilter: "blur(16px)",
-                boxShadow: isDark
-                    ? "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,92,246,0.1) inset"
-                    : "0 8px 32px rgba(139,92,246,0.1)",
-            }}
-        >
-            <p
-                className={`text-[10px] font-bold mb-3 tracking-widest ${isDark ? "text-purple-400" : "text-purple-600"}`}
-            >
-                CATEGORIES
-            </p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                {topCategories.map((cat) => (
-                    <div key={cat} className="flex items-center gap-2 group cursor-pointer">
-                        <div
-                            className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-white/20 group-hover:scale-125 transition-transform duration-200"
-                            style={{ backgroundColor: getCategoryColor(cat) }}
-                        />
-                        <span
-                            className={`text-[11px] capitalize transition-colors duration-200 ${isDark ? "text-white/50 group-hover:text-white" : "text-gray-500 group-hover:text-gray-700"}`}
-                        >
-                            {cat}
-                        </span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-// ===== Common Rotation Group =====
-function RotatingGlobeGroup({ children }) {
-    const groupRef = useRef();
-
-    useFrame((_, delta) => {
-        if (groupRef.current) {
-            groupRef.current.rotation.y += delta * 0.02;
-        }
-    });
-
-    return <group ref={groupRef}>{children}</group>;
-}
-
-// Helper for pausing rotation
-function RotatingGlobeGroupWithPause({ children, paused }) {
-    const groupRef = useRef();
-    useFrame((_, delta) => {
-        if (groupRef.current && !paused) {
-            groupRef.current.rotation.y += delta * 0.02;
-        }
-    });
-
-    return <group ref={groupRef}>{children}</group>;
-}
-
-// ===== Main Globe Component =====
-const GlobeComponent = ({ events, selectedEvent, lightMode, onEventSelect, onLoad }) => {
-    const isDark = !lightMode;
-    const [showHeatmap, setShowHeatmap] = useState(false);
-    const [bloomEnabled, setBloomEnabled] = useState(true);
-    const [ready, setReady] = useState(false);
-    const controlsRef = useRef();
-    const cameraRef = useRef();
-    
-    const activeEvent = selectedEvent;
-    
-    // Fly to selected event
-    useEffect(() => {
-        if (selectedEvent && selectedEvent.coordinates && controlsRef.current) {
-            const { lat, lon } = selectedEvent.coordinates;
-            
-            // Calculate the target position
-            const phi = (90 - lat) * (Math.PI / 180);
-            const theta = (lon + 180) * (Math.PI / 180);
-            
-            const targetX = 2.6 * Math.sin(phi) * Math.cos(theta);
-            const targetY = 2.6 * Math.cos(phi);
-            const targetZ = 2.6 * Math.sin(phi) * Math.sin(theta);
-            
-            // Animate the camera to face the selected location
-            const startTime = Date.now();
-            const duration = 1500;
-            
-            const animateCamera = () => {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
-                
-                // Smoothly interpolate the target
-                controlsRef.current.target.lerp(
-                    new THREE.Vector3(-targetX, targetY, -targetZ).normalize().multiplyScalar(0.01),
-                    easeProgress * 0.1
-                );
-                
-                if (progress < 1) {
-                    requestAnimationFrame(animateCamera);
-                }
-            };
-            
-            animateCamera();
-        }
-    }, [selectedEvent]);
-    
-    useEffect(() => {
-        // Give a small delay for initial render, then signal ready
-        const timer = setTimeout(() => {
-            setReady(true);
-            if (onLoad) onLoad();
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [onLoad]);
-    
-    const handlePinClick = useCallback(
-        (event) => {
-            if (onEventSelect) onEventSelect(event);
+      `,
+      uniforms: {
+        uInner: {
+          value: new THREE.Color(isDark ? "#1e3a8a" : "#c7d2fe"),
         },
-        [onEventSelect]
+        uOuter: {
+          value: new THREE.Color(isDark ? "#22d3ee" : "#818cf8"),
+        },
+        uIntensity: { value: isDark ? 0.95 : 0.45 },
+        uTime: { value: 0 },
+      },
+      transparent: true,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+  }, [isDark]);
+
+  useFrame(({ clock }) => {
+    material.uniforms.uTime.value = clock.elapsedTime;
+  });
+
+  return (
+    <mesh scale={[1.08, 1.08, 1.08]}>
+      <sphereGeometry args={[1, 64, 64]} />
+      <primitive object={material} attach="material" />
+    </mesh>
+  );
+}
+
+// ===== Earth =====
+function Globe({ isDark, densityTexture, showDensity }) {
+  const dayTexture = useLoader(THREE.TextureLoader, "/textures/earth-day.jpg");
+  const nightTexture = useLoader(THREE.TextureLoader, "/textures/earth-night.jpg");
+  const bumpTexture = useLoader(THREE.TextureLoader, "/textures/earth-bump.png");
+
+  useEffect(() => {
+    dayTexture.colorSpace = THREE.SRGBColorSpace;
+    nightTexture.colorSpace = THREE.SRGBColorSpace;
+    dayTexture.anisotropy = 8;
+    nightTexture.anisotropy = 8;
+    bumpTexture.anisotropy = 4;
+  }, [dayTexture, nightTexture, bumpTexture]);
+
+  const material = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        void main() {
+          vUv = uv;
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D dayTexture;
+        uniform sampler2D nightTexture;
+        uniform sampler2D bumpTexture;
+        uniform sampler2D densityTexture;
+        uniform vec3 lightDirection;
+        uniform float isDark;
+        uniform float showDensity;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        void main() {
+          vec3 normal = normalize(vNormal);
+          vec3 lightDir = normalize(lightDirection);
+          vec3 viewDir = normalize(vViewPosition);
+
+          float ndl = dot(normal, lightDir);
+          float dayMix = smoothstep(-0.18, 0.28, ndl);
+
+          vec3 day = texture2D(dayTexture, vUv).rgb;
+          vec3 night = texture2D(nightTexture, vUv).rgb;
+          float bump = texture2D(bumpTexture, vUv).r;
+
+          vec3 bumpNormal = normalize(normal + vec3(bump * 0.07));
+          float diffuse = max(dot(bumpNormal, lightDir), 0.0);
+          vec3 dayLit = day * (0.25 + diffuse * 0.95);
+          vec3 nightLit = night * (isDark > 0.5 ? 1.8 : 1.1);
+
+          vec3 color;
+          if (isDark > 0.5) {
+            color = mix(nightLit, dayLit, dayMix);
+          } else {
+            float daylight = 0.68 + max(ndl, 0.0) * 0.5;
+            color = day * daylight + night * 0.04;
+          }
+
+          float fresnel = pow(1.0 - abs(dot(normal, viewDir)), 3.0);
+          color += vec3(0.18, 0.32, 0.62) * fresnel * (isDark > 0.5 ? 0.7 : 0.18);
+
+          vec3 halfDir = normalize(lightDir + viewDir);
+          float spec = pow(max(dot(bumpNormal, halfDir), 0.0), 48.0);
+          color += vec3(spec * 0.1) * dayMix;
+
+          vec3 density = texture2D(densityTexture, vUv).rgb;
+          color += density * showDensity * (isDark > 0.5 ? 1.25 : 0.85);
+
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `,
+      uniforms: {
+        dayTexture: { value: dayTexture },
+        nightTexture: { value: nightTexture },
+        bumpTexture: { value: bumpTexture },
+        densityTexture: { value: densityTexture },
+        showDensity: { value: showDensity ? 1 : 0 },
+        lightDirection: {
+          value: new THREE.Vector3(5, 2.4, 5).normalize(),
+        },
+        isDark: { value: isDark ? 1 : 0 },
+      },
+    });
+  }, [dayTexture, nightTexture, bumpTexture, densityTexture, isDark]);
+
+  useEffect(() => {
+    if (material.uniforms.showDensity) {
+      material.uniforms.showDensity.value = showDensity ? 1 : 0;
+    }
+  }, [material, showDensity]);
+
+  useEffect(() => () => material.dispose(), [material]);
+
+  return (
+    <group>
+      <mesh>
+        <sphereGeometry args={[EARTH_RADIUS, 96, 96]} />
+        <primitive object={material} attach="material" />
+      </mesh>
+      <Atmosphere isDark={isDark} />
+    </group>
+  );
+}
+
+// ===== Country borders (local GeoJSON, one draw call) =====
+function WorldBorders({ isDark }) {
+  const [geometry, setGeometry] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await fetch("/data/countries-110m.geojson");
+        if (!res.ok) return;
+        const data = await res.json();
+        const positions = [];
+        const radius = 1.0025;
+
+        const addRing = (ring) => {
+          for (let i = 0; i < ring.length - 1; i += 1) {
+            const start = latLonToVector3(ring[i][1], ring[i][0], radius);
+            const end = latLonToVector3(ring[i + 1][1], ring[i + 1][0], radius);
+            positions.push(start.x, start.y, start.z, end.x, end.y, end.z);
+          }
+        };
+
+        data.features?.forEach((feature) => {
+          const geometry = feature.geometry;
+          if (!geometry) return;
+          if (geometry.type === "Polygon") {
+            geometry.coordinates.forEach(addRing);
+          } else if (geometry.type === "MultiPolygon") {
+            geometry.coordinates.forEach((polygon) => polygon.forEach(addRing));
+          }
+        });
+
+        if (cancelled) return;
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(positions, 3)
+        );
+        setGeometry(geo);
+      } catch (error) {
+        console.error("Failed to load country borders:", error);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => () => geometry?.dispose(), [geometry]);
+
+  if (!geometry) return null;
+
+  return (
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial
+        color={isDark ? "#7dd3fc" : "#475569"}
+        transparent
+        opacity={isDark ? 0.2 : 0.24}
+        depthWrite={false}
+      />
+    </lineSegments>
+  );
+}
+
+// ===== Latitude / longitude graticule =====
+function Graticule({ isDark }) {
+  const geometry = useMemo(() => {
+    const positions = [];
+    const radius = 1.003;
+    const push = (a, b) => {
+      positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+    };
+
+    for (let lat = -60; lat <= 60; lat += 30) {
+      for (let lon = -180; lon < 180; lon += 4) {
+        push(
+          latLonToVector3(lat, lon, radius),
+          latLonToVector3(lat, lon + 4, radius)
+        );
+      }
+    }
+
+    for (let lon = -180; lon < 180; lon += 30) {
+      for (let lat = -90; lat < 90; lat += 4) {
+        push(
+          latLonToVector3(lat, lon, radius),
+          latLonToVector3(lat + 4, lon, radius)
+        );
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(positions, 3)
     );
-    
-    const handleClose = useCallback(() => {
-        if (onEventSelect) onEventSelect(null);
-    }, [onEventSelect]);
-    
-    return (
-        <div
-            className="relative h-full w-full overflow-hidden"
-            style={{ 
-                background: isDark 
-                    ? "radial-gradient(ellipse at center, #0f1729 0%, #0a0c1a 70%, #050714 100%)" 
-                    : "radial-gradient(ellipse at center, #f1f5f9 0%, #e2e8f0 70%, #cbd5e1 100%)" 
-            }}
+    return geo;
+  }, []);
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial
+        color={isDark ? "#67e8f9" : "#64748b"}
+        transparent
+        opacity={isDark ? 0.07 : 0.09}
+        depthWrite={false}
+      />
+    </lineSegments>
+  );
+}
+
+// ===== GPU event point cloud =====
+function EventPoints({ events, onEventSelect, isDark }) {
+  const [hovered, setHovered] = useState(null);
+  const lastHovered = useRef(null);
+  const raycaster = useThree((state) => state.raycaster);
+  const pixelRatio = useThree((state) => state.gl.getPixelRatio());
+
+  useEffect(() => {
+    raycaster.params.Points.threshold = 0.018;
+    return () => {
+      document.body.style.cursor = "auto";
+    };
+  }, [raycaster]);
+
+  const { geometry, material, validEvents } = useMemo(() => {
+    const valid = (events || []).filter(
+      (event) =>
+        event?.coordinates &&
+        Number.isFinite(event.coordinates.lat) &&
+        Number.isFinite(event.coordinates.lon)
+    );
+
+    const count = valid.length;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const phases = new Float32Array(count);
+    const color = new THREE.Color();
+
+    valid.forEach((event, index) => {
+      const point = latLonToVector3(
+        event.coordinates.lat,
+        event.coordinates.lon,
+        PIN_RADIUS
+      );
+      positions[index * 3] = point.x;
+      positions[index * 3 + 1] = point.y;
+      positions[index * 3 + 2] = point.z;
+
+      color.set(getCategoryColor(event.category));
+      colors[index * 3] = color.r;
+      colors[index * 3 + 1] = color.g;
+      colors[index * 3 + 2] = color.b;
+
+      sizes[index] = 6.4 + (index % 5) * 0.55;
+      phases[index] = (index * 0.61803398875) % 1;
+    });
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute("aColor", new THREE.BufferAttribute(colors, 3));
+    geo.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
+    geo.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1));
+
+    const mat = new THREE.ShaderMaterial({
+      vertexShader: `
+        attribute vec3 aColor;
+        attribute float aSize;
+        attribute float aPhase;
+        uniform float uTime;
+        uniform float uPixelRatio;
+        uniform float uPointSize;
+        varying vec3 vColor;
+        varying float vPhase;
+        void main() {
+          vColor = aColor;
+          vPhase = aPhase;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          float distanceToCamera = max(0.1, -mvPosition.z);
+          float twinkle = 0.8 + 0.2 * sin(uTime * 2.0 + aPhase * 6.28318);
+          gl_PointSize = uPointSize * uPixelRatio * twinkle * (2.6 / distanceToCamera);
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform float uDark;
+        varying vec3 vColor;
+        varying float vPhase;
+        void main() {
+          vec2 uv = gl_PointCoord - vec2(0.5);
+          float distanceToCenter = length(uv);
+          if (distanceToCenter > 0.5) discard;
+
+          float core = smoothstep(0.5, 0.0, distanceToCenter);
+          float halo = smoothstep(0.5, 0.08, distanceToCenter) * 0.55;
+          float sparkle = 0.85 + 0.15 * sin(vPhase * 12.0);
+          float alpha = (core * 0.9 + halo * 0.45) * sparkle;
+          vec3 color = vColor + vec3(0.35) * pow(core, 5.0);
+
+          gl_FragColor = vec4(color, alpha * (uDark > 0.5 ? 0.95 : 0.82));
+        }
+      `,
+      uniforms: {
+        uTime: { value: 0 },
+        uPixelRatio: { value: pixelRatio },
+        uPointSize: { value: isDark ? 7.2 : 8.6 },
+        uDark: { value: isDark ? 1 : 0 },
+      },
+      transparent: true,
+      depthWrite: false,
+      depthTest: true,
+      blending: isDark ? THREE.AdditiveBlending : THREE.NormalBlending,
+    });
+
+    return { geometry: geo, material: mat, validEvents: valid };
+  }, [events, isDark, pixelRatio]);
+
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      material.dispose();
+    },
+    [geometry, material]
+  );
+
+  useFrame(({ clock }) => {
+    material.uniforms.uTime.value = clock.elapsedTime;
+    material.uniforms.uPixelRatio.value = pixelRatio;
+  });
+
+  const handlePointerMove = useCallback(
+    (event) => {
+      event.stopPropagation();
+      const index = event.index;
+      if (index == null || !validEvents[index]) return;
+      if (lastHovered.current !== index) {
+        lastHovered.current = index;
+        setHovered(index);
+        document.body.style.cursor = "pointer";
+      }
+    },
+    [validEvents]
+  );
+
+  const handlePointerOut = useCallback(() => {
+    lastHovered.current = null;
+    setHovered(null);
+    document.body.style.cursor = "auto";
+  }, []);
+
+  const handleClick = useCallback(
+    (event) => {
+      event.stopPropagation();
+      const index = event.index;
+      if (index != null && validEvents[index]) {
+        onEventSelect?.(validEvents[index]);
+      }
+    },
+    [onEventSelect, validEvents]
+  );
+
+  const hoveredEvent = hovered != null ? validEvents[hovered] : null;
+  const hoverPosition = useMemo(() => {
+    if (!hoveredEvent) return null;
+    return latLonToVector3(
+      hoveredEvent.coordinates.lat,
+      hoveredEvent.coordinates.lon,
+      1.04
+    );
+  }, [hoveredEvent]);
+
+  return (
+    <group>
+      <points
+        geometry={geometry}
+        material={material}
+        onPointerMove={handlePointerMove}
+        onPointerOut={handlePointerOut}
+        onClick={handleClick}
+      />
+
+      {hoveredEvent && hoverPosition && (
+        <Html
+          position={hoverPosition}
+          center
+          distanceFactor={2.4}
+          zIndexRange={[70, 0]}
+          style={{ pointerEvents: "none" }}
         >
-            <Canvas
-                camera={{ position: [0, 0, 2.6], fov: 45 }}
-                gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
-                dpr={[1, 2]}
+          <div
+            className="max-w-[240px] rounded-xl px-3 py-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
+            style={{
+              background: isDark
+                ? "rgba(9,12,24,0.94)"
+                : "rgba(255,255,255,0.96)",
+              border: isDark
+                ? "1px solid rgba(103,232,249,0.32)"
+                : "1px solid rgba(15,23,42,0.12)",
+              boxShadow: isDark
+                ? "0 12px 40px rgba(34,211,238,0.22)"
+                : "0 12px 30px rgba(15,23,42,0.14)",
+            }}
+          >
+            <p
+              className="text-[11px] font-semibold leading-snug line-clamp-3"
+              style={{ color: isDark ? "#f8fafc" : "#0f172a" }}
             >
-                {/* Post-processing */}
-                {bloomEnabled && isDark && (
-                    <EffectComposer>
-                        <Bloom
-                            luminanceThreshold={0.2}
-                            luminanceSmoothing={0.9}
-                            intensity={0.8}
-                            radius={0.8}
-                        />
-                    </EffectComposer>
-                )}
-                
-                {/* Lighting */}
-                <ambientLight intensity={isDark ? 0.3 : 0.5} />
-                <directionalLight
-                    position={[5, 3, 5]}
-                    intensity={isDark ? 1.2 : 1.4}
-                    color={isDark ? "#ffffff" : "#fffaf0"}
-                />
-                <pointLight
-                    position={[-5, -3, -5]}
-                    intensity={0.4}
-                    color="#6366f1"
-                />
-                {/* Accent light */}
-                <pointLight
-                    position={[3, -2, 2]}
-                    intensity={0.2}
-                    color={isDark ? "#8b5cf6" : "#f59e0b"}
-                />
-                
-                {/* Stars (dark mode) */}
-                {isDark && (
-                    <Stars
-                        radius={100}
-                        depth={50}
-                        count={4000}
-                        factor={5}
-                        saturation={0.1}
-                        fade
-                        speed={0.3}
-                    />
-                )}
-                
-                {/* ROTATING GROUP */}
-                <RotatingGlobeGroupWithPause paused={!!activeEvent}>
-                    <Globe isDark={isDark} />
-                    
-                    {/* Render Heatmap OR Pins */}
-                    {showHeatmap && (
-                        <HeatmapMesh events={events} />
-                    )}
-                    
-                    {!showHeatmap && (
-                        <EventPins
-                            events={events}
-                            onPinClick={handlePinClick}
-                            selectedEvent={activeEvent}
-                            isDark={isDark}
-                        />
-                    )}
-                </RotatingGlobeGroupWithPause>
-                
-                {/* Controls */}
-                <OrbitControls
-                    ref={controlsRef}
-                    enablePan={false}
-                    enableZoom={true}
-                    minDistance={1.5}
-                    maxDistance={5}
-                    rotateSpeed={0.5}
-                    zoomSpeed={0.8}
-                    autoRotate={false}
-                    enableDamping={true}
-                    dampingFactor={0.05}
-                />
-            </Canvas>
-            
-            {/* Category Legend */}
-            <CategoryLegend isDark={isDark} />
-            
-            {/* View toggle: Heatmap vs Pins */}
-            <div className="absolute top-4 left-4 z-[1010] flex gap-2">
-                <button
-                    onClick={() => setShowHeatmap(!showHeatmap)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-300 ${isDark
-                        ? "glass-dark text-white/70 hover:text-white hover:bg-white/10"
-                        : "glass text-gray-600 hover:text-gray-900 hover:bg-black/5"
-                        }`}
-                    style={{
-                        border: isDark
-                            ? "1px solid rgba(255,255,255,0.1)"
-                            : "1px solid rgba(0,0,0,0.1)",
-                    }}
-                >
-                    {showHeatmap ? "📍 Show Pins" : "🌋 Show Density"}
-                </button>
-                
-                {/* Bloom toggle */}
-                <button
-                    onClick={() => setBloomEnabled(!bloomEnabled)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-300 ${isDark
-                        ? "glass-dark text-white/50 hover:text-white hover:bg-white/10"
-                        : "glass text-gray-500 hover:text-gray-900 hover:bg-black/5"
-                        } ${bloomEnabled ? 'ring-1 ring-purple-500/30' : ''}`}
-                    style={{
-                        border: isDark
-                            ? "1px solid rgba(255,255,255,0.1)"
-                            : "1px solid rgba(0,0,0,0.1)",
-                    }}
-                >
-                    ✨ {bloomEnabled ? 'Glow On' : 'Glow Off'}
-                </button>
+              {hoveredEvent.title}
+            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <span
+                className="text-[10px] font-bold tabular-nums"
+                style={{ color: getCategoryColor(hoveredEvent.category) }}
+              >
+                {hoveredEvent.year}
+              </span>
+              <span
+                className="rounded-full px-1.5 py-0.5 text-[9px] capitalize"
+                style={{
+                  background: `${getCategoryColor(hoveredEvent.category)}22`,
+                  color: getCategoryColor(hoveredEvent.category),
+                }}
+              >
+                {hoveredEvent.category}
+              </span>
             </div>
-            
-            {/* Instructions */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none">
-                <div
-                    className={`text-xs px-4 py-2 rounded-full backdrop-blur-md transition-all duration-300 ${isDark ? "bg-black/30 text-white/50" : "bg-white/50 text-gray-500"}`}
-                >
-                    Drag to rotate · Scroll to zoom · {showHeatmap ? "Explore density peaks" : "Click pins to explore"}
-                </div>
-            </div>
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+// ===== Selected event marker =====
+function SelectionMarker({ event, isDark, glowTexture, onEventSelect }) {
+  const pulseRef = useRef();
+  const ringRef = useRef();
+  const beamRef = useRef();
+
+  const position = useMemo(
+    () =>
+      latLonToVector3(
+        event.coordinates.lat,
+        event.coordinates.lon,
+        1.02
+      ),
+    [event.coordinates.lat, event.coordinates.lon]
+  );
+
+  const normal = useMemo(() => position.clone().normalize(), [position]);
+  const ringQuaternion = useMemo(
+    () =>
+      new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 0, 1),
+        normal
+      ),
+    [normal]
+  );
+  const beamQuaternion = useMemo(
+    () =>
+      new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        normal
+      ),
+    [normal]
+  );
+
+  const color = getCategoryColor(event.category);
+
+  useFrame(({ clock }) => {
+    const time = clock.elapsedTime;
+    if (pulseRef.current) {
+      const scale = 0.16 + Math.sin(time * 2.6) * 0.025;
+      pulseRef.current.scale.setScalar(scale);
+      pulseRef.current.material.opacity = 0.62 + Math.sin(time * 2.6) * 0.18;
+    }
+    if (ringRef.current) {
+      const scale = 1 + Math.sin(time * 2.2) * 0.16;
+      ringRef.current.scale.setScalar(scale);
+      ringRef.current.material.opacity = 0.45 + Math.sin(time * 2.2) * 0.2;
+    }
+    if (beamRef.current) {
+      beamRef.current.opacity = 0.32 + Math.sin(time * 2.8) * 0.12;
+    }
+  });
+
+  return (
+    <group position={position}>
+      <sprite ref={pulseRef} scale={0.16}>
+        <spriteMaterial
+          map={glowTexture}
+          color={color}
+          transparent
+          opacity={0.7}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </sprite>
+
+      <mesh ref={ringRef} quaternion={ringQuaternion}>
+        <ringGeometry args={[0.022, 0.032, 64]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.55}
+          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      <mesh
+        position={normal.clone().multiplyScalar(0.055)}
+        quaternion={beamQuaternion}
+      >
+        <cylinderGeometry args={[0.0015, 0.0045, 0.11, 8]} />
+        <meshBasicMaterial
+          ref={beamRef}
+          color={color}
+          transparent
+          opacity={0.4}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      <Html
+        position={normal.clone().multiplyScalar(0.09)}
+        center
+        distanceFactor={2.2}
+        zIndexRange={[80, 0]}
+        style={{ pointerEvents: "auto" }}
+      >
+        <div
+          onClick={(clickEvent) => {
+            clickEvent.stopPropagation();
+            onEventSelect?.(event);
+          }}
+          className="max-w-[240px] cursor-pointer rounded-2xl px-3.5 py-2.5 shadow-2xl backdrop-blur-xl transition-transform duration-150 hover:scale-[1.03]"
+          style={{
+            background: isDark
+              ? "rgba(9,12,24,0.96)"
+              : "rgba(255,255,255,0.97)",
+            border: `1px solid ${color}55`,
+            boxShadow: `0 16px 50px ${color}33`,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: color, boxShadow: `0 0 10px ${color}` }}
+            />
+            <span
+              className="text-[9px] font-bold uppercase tracking-[0.18em]"
+              style={{ color }}
+            >
+              {event.category}
+            </span>
+            <span
+              className="ml-auto text-[10px] font-bold tabular-nums"
+              style={{ color: isDark ? "#e2e8f0" : "#334155" }}
+            >
+              {event.year}
+            </span>
+          </div>
+          <p
+            className="mt-1.5 text-[11px] font-medium leading-snug line-clamp-3"
+            style={{ color: isDark ? "#f8fafc" : "#0f172a" }}
+          >
+            {event.title}
+          </p>
+          <p
+            className="mt-1.5 text-[9px]"
+            style={{ color: isDark ? "#94a3b8" : "#64748b" }}
+          >
+            Click to open details →
+          </p>
         </div>
+      </Html>
+    </group>
+  );
+}
+
+// ===== Animated connection arcs =====
+function ArcComet({ curve, color, glowTexture, offset, speed }) {
+  const ref = useRef();
+  const progress = useRef(offset);
+
+  useFrame((_, delta) => {
+    progress.current = (progress.current + delta * speed) % 1;
+    if (ref.current) {
+      ref.current.position.copy(curve.getPointAt(progress.current));
+    }
+  });
+
+  return (
+    <sprite
+      ref={ref}
+      position={curve.getPointAt(offset)}
+      scale={0.026}
+    >
+      <spriteMaterial
+        map={glowTexture}
+        color={color}
+        transparent
+        opacity={0.95}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </sprite>
+  );
+}
+
+function ConnectionArcs({ events, isDark, glowTexture }) {
+  const arcs = useMemo(() => {
+    const valid = (events || []).filter(
+      (event) =>
+        event?.coordinates &&
+        Number.isFinite(event.coordinates.lat) &&
+        Number.isFinite(event.coordinates.lon)
     );
+    if (valid.length < 2) return [];
+
+    const total = Math.min(9, Math.max(4, Math.floor(valid.length / 90)));
+    const result = [];
+    const length = valid.length;
+
+    for (let i = 0; i < total; i += 1) {
+      const a = valid[(i * 37 + 11) % length];
+      const b = valid[(i * 53 + Math.floor(length / 2) + 29) % length];
+      if (!a || !b || a._id === b._id) continue;
+
+      const points = greatCircleArc(
+        a.coordinates.lat,
+        a.coordinates.lon,
+        b.coordinates.lat,
+        b.coordinates.lon,
+        PIN_RADIUS + 0.004,
+        0.03 + (i % 4) * 0.012
+      );
+      const curve = new THREE.CatmullRomCurve3(points);
+      result.push({
+        id: `${a._id}-${b._id}`,
+        curve,
+        color: ARC_COLORS[i % ARC_COLORS.length],
+        offset: (i / total + 0.12) % 1,
+        speed: 0.055 + (i % 3) * 0.018,
+      });
+    }
+    return result;
+  }, [events]);
+
+  if (arcs.length === 0) return null;
+
+  return (
+    <group>
+      {arcs.map((arc) => (
+        <group key={arc.id}>
+          <Line
+            points={arc.curve.getPoints(64)}
+            color={arc.color}
+            lineWidth={0.95}
+            transparent
+            opacity={isDark ? 0.24 : 0.16}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+          <ArcComet
+            curve={arc.curve}
+            color={arc.color}
+            glowTexture={glowTexture}
+            offset={arc.offset}
+            speed={arc.speed}
+          />
+        </group>
+      ))}
+    </group>
+  );
+}
+
+// ===== Density heatmap texture =====
+function useDensityTexture(events) {
+  const texture = useMemo(() => {
+    if (typeof document === "undefined") return null;
+
+    const width = 1024;
+    const height = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, width, height);
+    ctx.globalCompositeOperation = "lighter";
+
+    const radius = 12;
+
+    const drawBlob = (x, y) => {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, "rgba(255, 230, 130, 0.55)");
+      gradient.addColorStop(0.3, "rgba(255, 130, 45, 0.32)");
+      gradient.addColorStop(0.65, "rgba(220, 38, 38, 0.14)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    (events || []).forEach((event) => {
+      if (!event?.coordinates) return;
+      const { lat, lon } = event.coordinates;
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+      const x = ((lon + 180) / 360) * width;
+      const y = ((90 - lat) / 180) * height;
+
+      drawBlob(x, y);
+      if (x < radius) drawBlob(x + width, y);
+      if (x > width - radius) drawBlob(x - width, y);
+    });
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.anisotropy = 4;
+    tex.needsUpdate = true;
+    return tex;
+  }, [events]);
+
+  useEffect(() => () => texture?.dispose(), [texture]);
+  return texture;
+}
+
+// ===== Star field =====
+function Starfield({ isDark }) {
+  const width = useThree((state) => state.size.width);
+  if (!isDark) return null;
+  return (
+    <Stars
+      radius={90}
+      depth={50}
+      count={width < 768 ? 2400 : 6500}
+      factor={4.5}
+      saturation={0.22}
+      fade
+      speed={0.25}
+    />
+  );
+}
+
+// ===== Rotation / focus controller =====
+function GlobeRotation({
+  children,
+  autoRotate,
+  selectedEvent,
+  interactingRef,
+  resetSignal,
+}) {
+  const groupRef = useRef();
+  const targetQuaternion = useRef(null);
+  const resumeAt = useRef(0);
+
+  useEffect(() => {
+    if (selectedEvent?.coordinates) {
+      const direction = latLonToVector3(
+        selectedEvent.coordinates.lat,
+        selectedEvent.coordinates.lon,
+        1
+      ).normalize();
+      targetQuaternion.current = new THREE.Quaternion().setFromUnitVectors(
+        direction,
+        new THREE.Vector3(0, 0, 1)
+      );
+      resumeAt.current = Infinity;
+    } else {
+      targetQuaternion.current = null;
+      resumeAt.current = performance.now() + 1100;
+    }
+  }, [selectedEvent]);
+
+  useEffect(() => {
+    if (resetSignal > 0) {
+      targetQuaternion.current = new THREE.Quaternion();
+      resumeAt.current = performance.now() + 400;
+    }
+  }, [resetSignal]);
+
+  useFrame((_, delta) => {
+    const group = groupRef.current;
+    if (!group) return;
+
+    if (targetQuaternion.current) {
+      group.quaternion.slerp(
+        targetQuaternion.current,
+        1 - Math.exp(-delta * 5.5)
+      );
+      if (group.quaternion.angleTo(targetQuaternion.current) < 0.004) {
+        targetQuaternion.current = null;
+      }
+      return;
+    }
+
+    if (
+      autoRotate &&
+      !interactingRef.current &&
+      performance.now() > resumeAt.current
+    ) {
+      const spin = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(0, 1, 0),
+        delta * AUTO_ROTATE_SPEED
+      );
+      group.quaternion.premultiply(spin);
+    }
+  });
+
+  return <group ref={groupRef}>{children}</group>;
+}
+
+// ===== Small UI helpers =====
+function HudButton({ active = false, onClick, icon: Icon, label, isDark }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`pointer-events-auto flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[10px] font-medium transition-all duration-200 backdrop-blur-xl ${
+        active
+          ? isDark
+            ? "border-cyan-400/40 bg-cyan-400/12 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.16)]"
+            : "border-cyan-600/30 bg-cyan-500/10 text-cyan-700"
+          : isDark
+            ? "border-white/8 bg-white/4 text-white/45 hover:border-white/15 hover:bg-white/8 hover:text-white/80"
+            : "border-black/8 bg-white/50 text-gray-500 hover:border-black/15 hover:bg-white/80 hover:text-gray-800"
+      }`}
+    >
+      {Icon && <Icon className="h-3 w-3" />}
+      {label}
+    </button>
+  );
+}
+
+function CategoryLegend({ isDark }) {
+  const topCategories = [
+    "war",
+    "political",
+    "scientific",
+    "cultural",
+    "historical",
+    "discoveries",
+    "holidays",
+    "events",
+    "births",
+    "deaths",
+  ];
+
+  return (
+    <div
+      className={`pointer-events-auto hidden rounded-2xl p-3.5 md:block ${
+        isDark ? "glass-dark" : "glass"
+      }`}
+      style={{
+        border: isDark
+          ? "1px solid rgba(139,92,246,0.18)"
+          : "1px solid rgba(139,92,246,0.12)",
+        background: isDark
+          ? "rgba(15,17,30,0.72)"
+          : "rgba(255,255,255,0.78)",
+        backdropFilter: "blur(18px)",
+        boxShadow: isDark
+          ? "0 8px 32px rgba(0,0,0,0.35)"
+          : "0 8px 32px rgba(139,92,246,0.08)",
+      }}
+    >
+      <p
+        className={`mb-2.5 text-[9px] font-bold tracking-[0.22em] ${
+          isDark ? "text-purple-300/80" : "text-purple-600"
+        }`}
+      >
+        CATEGORIES
+      </p>
+      <div className="grid grid-cols-2 gap-x-5 gap-y-1.5">
+        {topCategories.map((category) => (
+          <div key={category} className="group flex items-center gap-2">
+            <div
+              className="h-1.5 w-1.5 flex-shrink-0 rounded-full ring-1 ring-white/20 transition-transform duration-200 group-hover:scale-150"
+              style={{
+                backgroundColor: getCategoryColor(category),
+                boxShadow: `0 0 8px ${getCategoryColor(category)}`,
+              }}
+            />
+            <span
+              className={`text-[10px] capitalize transition-colors ${
+                isDark
+                  ? "text-white/45 group-hover:text-white/80"
+                  : "text-gray-500 group-hover:text-gray-800"
+              }`}
+            >
+              {category}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===== Main component =====
+const GlobeComponent = ({
+  events,
+  selectedEvent,
+  lightMode,
+  onEventSelect,
+  onLoad,
+}) => {
+  const isDark = !lightMode;
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showPins, setShowPins] = useState(true);
+  const [showArcs, setShowArcs] = useState(true);
+  const [bloomEnabled, setBloomEnabled] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [resetSignal, setResetSignal] = useState(0);
+
+  const controlsRef = useRef();
+  const interactingRef = useRef(false);
+  const interactionTimeout = useRef();
+  const readyRef = useRef(false);
+  const onLoadRef = useRef(onLoad);
+
+  const { active, progress } = useProgress();
+
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+  }, [onLoad]);
+
+  const glowTexture = useMemo(
+    () => (typeof document !== "undefined" ? makeGlowTexture() : null),
+    []
+  );
+  const densityTexture = useDensityTexture(events);
+
+  useEffect(
+    () => () => {
+      glowTexture?.dispose();
+      clearTimeout(interactionTimeout.current);
+    },
+    [glowTexture]
+  );
+
+  const signalReady = useCallback(() => {
+    if (readyRef.current) return;
+    readyRef.current = true;
+    onLoadRef.current?.();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(signalReady, 1200);
+    return () => clearTimeout(timer);
+  }, [signalReady]);
+
+  useEffect(() => {
+    if (!active && progress >= 100) signalReady();
+  }, [active, progress, signalReady]);
+
+  const stats = useMemo(() => {
+    const coordinates = (events || []).filter((event) => event?.coordinates);
+    const categories = new Set();
+    let minYear = Infinity;
+    let maxYear = -Infinity;
+
+    coordinates.forEach((event) => {
+      if (event.category) categories.add(event.category);
+      if (Number.isFinite(event.year)) {
+        minYear = Math.min(minYear, event.year);
+        maxYear = Math.max(maxYear, event.year);
+      }
+    });
+
+    return {
+      count: coordinates.length,
+      categories: categories.size,
+      minYear: Number.isFinite(minYear) ? minYear : 0,
+      maxYear: Number.isFinite(maxYear) ? maxYear : 0,
+    };
+  }, [events]);
+
+  const handleControlStart = useCallback(() => {
+    interactingRef.current = true;
+    clearTimeout(interactionTimeout.current);
+  }, []);
+
+  const handleControlEnd = useCallback(() => {
+    clearTimeout(interactionTimeout.current);
+    interactionTimeout.current = setTimeout(() => {
+      interactingRef.current = false;
+    }, 1400);
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setResetSignal((value) => value + 1);
+    controlsRef.current?.reset();
+  }, []);
+
+  const handleTogglePins = useCallback(() => {
+    setShowPins(true);
+    setShowHeatmap(false);
+  }, []);
+
+  const handleToggleHeatmap = useCallback(() => {
+    setShowHeatmap(true);
+    setShowPins(false);
+  }, []);
+
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden"
+      style={{
+        background: isDark
+          ? "radial-gradient(ellipse at 50% 45%, #0b1730 0%, #070b18 55%, #03050c 100%)"
+          : "radial-gradient(ellipse at 50% 45%, #eef4ff 0%, #e2e8f0 60%, #cbd5e1 100%)",
+      }}
+    >
+      {/* Ambient light blooms behind the canvas */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute -left-[14%] top-[8%] h-[42%] w-[42%] rounded-full blur-[110px]"
+          style={{
+            background: isDark
+              ? "rgba(34,211,238,0.13)"
+              : "rgba(99,102,241,0.10)",
+          }}
+        />
+        <div
+          className="absolute -right-[10%] bottom-[2%] h-[38%] w-[38%] rounded-full blur-[120px]"
+          style={{
+            background: isDark
+              ? "rgba(139,92,246,0.16)"
+              : "rgba(14,165,233,0.10)",
+          }}
+        />
+        <div
+          className="absolute left-[38%] top-[42%] h-[26%] w-[26%] rounded-full blur-[100px]"
+          style={{
+            background: isDark
+              ? "rgba(16,185,129,0.07)"
+              : "rgba(16,185,129,0.06)",
+          }}
+        />
+      </div>
+
+      <div className="absolute inset-0">
+        <Canvas
+          camera={{ position: [0, 0, 3.35], fov: 42 }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance",
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.15,
+          }}
+          dpr={[1, 1.85]}
+          onCreated={({ camera }) => {
+            if (typeof window === "undefined") return;
+            const aspect = window.innerWidth / window.innerHeight;
+            const distance = aspect < 0.62 ? 6.4 : aspect < 0.9 ? 4.4 : 3.35;
+            camera.position.set(0, 0, distance);
+            camera.updateProjectionMatrix();
+          }}
+        >
+          <Suspense fallback={null}>
+            <Starfield isDark={isDark} />
+
+            <ambientLight intensity={isDark ? 0.22 : 0.5} />
+            <directionalLight
+              position={[5, 2.4, 5]}
+              intensity={isDark ? 1.15 : 1.35}
+              color={isDark ? "#f8fbff" : "#fffaf0"}
+            />
+            <pointLight
+              position={[-5, -3, -5]}
+              intensity={isDark ? 0.5 : 0.3}
+              color="#6366f1"
+            />
+            <pointLight
+              position={[3, -2, 2]}
+              intensity={0.25}
+              color={isDark ? "#8b5cf6" : "#f59e0b"}
+            />
+
+            <GlobeRotation
+              autoRotate={autoRotate}
+              selectedEvent={selectedEvent}
+              interactingRef={interactingRef}
+              resetSignal={resetSignal}
+            >
+              <Globe
+                isDark={isDark}
+                densityTexture={densityTexture}
+                showDensity={showHeatmap}
+              />
+              <Graticule isDark={isDark} />
+              <WorldBorders isDark={isDark} />
+
+              {showPins && (
+                <EventPoints
+                  events={events}
+                  onEventSelect={onEventSelect}
+                  isDark={isDark}
+                />
+              )}
+
+              {showArcs && (
+                <ConnectionArcs
+                  events={events}
+                  isDark={isDark}
+                  glowTexture={glowTexture}
+                />
+              )}
+
+              {selectedEvent?.coordinates && (
+                <SelectionMarker
+                  event={selectedEvent}
+                  isDark={isDark}
+                  glowTexture={glowTexture}
+                  onEventSelect={onEventSelect}
+                />
+              )}
+            </GlobeRotation>
+
+            <OrbitControls
+              ref={controlsRef}
+              enablePan={false}
+              enableZoom
+              minDistance={2.35}
+              maxDistance={7.2}
+              rotateSpeed={0.45}
+              zoomSpeed={0.7}
+              enableDamping
+              dampingFactor={0.06}
+              onStart={handleControlStart}
+              onEnd={handleControlEnd}
+            />
+
+            {bloomEnabled && isDark && (
+              <EffectComposer>
+                <Bloom
+                  luminanceThreshold={0.16}
+                  luminanceSmoothing={0.85}
+                  intensity={1.05}
+                  radius={0.78}
+                  mipmapBlur
+                />
+              </EffectComposer>
+            )}
+          </Suspense>
+        </Canvas>
+      </div>
+
+      {/* Vignette */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          boxShadow: isDark
+            ? "inset 0 0 180px 40px rgba(0,0,0,0.55)"
+            : "inset 0 0 160px 30px rgba(148,163,184,0.22)",
+        }}
+      />
+
+      {/* HUD */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1010] flex items-start justify-between gap-3 px-3 pb-3 pt-20 lg:px-5 lg:pb-5 lg:pt-24">
+        <div className="max-w-[280px]">
+          <div
+            className={`pointer-events-auto rounded-2xl p-3.5 ${
+              isDark ? "glass-dark" : "glass"
+            }`}
+            style={{
+              border: isDark
+                ? "1px solid rgba(34,211,238,0.18)"
+                : "1px solid rgba(15,23,42,0.08)",
+              background: isDark
+                ? "rgba(9,13,26,0.74)"
+                : "rgba(255,255,255,0.8)",
+              backdropFilter: "blur(18px)",
+              boxShadow: isDark
+                ? "0 10px 40px rgba(0,0,0,0.35)"
+                : "0 10px 30px rgba(15,23,42,0.08)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              </span>
+              <span
+                className={`text-[9px] font-bold tracking-[0.24em] ${
+                  isDark ? "text-white/65" : "text-gray-600"
+                }`}
+              >
+                LIVE HISTORY NETWORK
+              </span>
+            </div>
+
+            <div className="mt-2 flex items-baseline gap-2">
+              <span
+                className={`text-2xl font-semibold tabular-nums leading-none ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
+                {stats.count.toLocaleString()}
+              </span>
+              <span
+                className={`text-[10px] ${
+                  isDark ? "text-white/45" : "text-gray-500"
+                }`}
+              >
+                events on the globe
+              </span>
+            </div>
+
+            <div
+              className={`mt-1.5 flex items-center gap-2 text-[9px] ${
+                isDark ? "text-white/35" : "text-gray-400"
+              }`}
+            >
+              <span>{stats.categories} categories</span>
+              <span className="opacity-30">·</span>
+              <span className="tabular-nums">
+                {stats.minYear} → {stats.maxYear}
+              </span>
+            </div>
+          </div>
+
+          <div className="pointer-events-auto mt-2 flex flex-wrap gap-1.5">
+            <HudButton
+              isDark={isDark}
+              active={autoRotate}
+              onClick={() => setAutoRotate((value) => !value)}
+              icon={autoRotate ? Pause : Play}
+              label={autoRotate ? "Auto" : "Paused"}
+            />
+            <HudButton
+              isDark={isDark}
+              active={showArcs}
+              onClick={() => setShowArcs((value) => !value)}
+              icon={Network}
+              label="Arcs"
+            />
+            <HudButton
+              isDark={isDark}
+              active={showPins}
+              onClick={handleTogglePins}
+              icon={Sparkles}
+              label="Pins"
+            />
+            <HudButton
+              isDark={isDark}
+              active={showHeatmap}
+              onClick={handleToggleHeatmap}
+              icon={Flame}
+              label="Density"
+            />
+            <HudButton
+              isDark={isDark}
+              active={bloomEnabled}
+              onClick={() => setBloomEnabled((value) => !value)}
+              icon={Sparkles}
+              label="Glow"
+            />
+            <HudButton
+              isDark={isDark}
+              onClick={handleReset}
+              icon={RotateCcw}
+              label="Reset"
+            />
+            {selectedEvent && (
+              <HudButton
+                isDark={isDark}
+                onClick={() => onEventSelect?.(null)}
+                icon={X}
+                label="Clear"
+              />
+            )}
+          </div>
+        </div>
+
+        <CategoryLegend isDark={isDark} />
+      </div>
+
+      {/* Bottom hint */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[1010] flex justify-center px-4">
+        <div
+          className={`rounded-full px-4 py-2 text-[10px] backdrop-blur-xl ${
+            isDark ? "bg-black/35 text-white/45" : "bg-white/60 text-gray-500"
+          }`}
+          style={{
+            border: isDark
+              ? "1px solid rgba(255,255,255,0.07)"
+              : "1px solid rgba(15,23,42,0.06)",
+          }}
+        >
+          Drag to orbit · Scroll to zoom · Click a light to explore
+          {selectedEvent ? " · Focused on selected event" : ""}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default GlobeComponent;

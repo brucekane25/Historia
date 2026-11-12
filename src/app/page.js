@@ -58,7 +58,7 @@ export default function Home() {
   
   // New states
   const [showTutorial, setShowTutorial] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(true); // Default to stats open
+  const [statsOpen, setStatsOpen] = useState(false); // Keep the map/globe unobstructed by default
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [globeLoading, setGlobeLoading] = useState(false);
@@ -273,7 +273,7 @@ export default function Home() {
       />
 
       {/* On This Day Widget */}
-      {!isLoading && isDesktop && (
+      {!isLoading && isDesktop && viewMode === "map" && (
         <OnThisDay
           lightMode={lightMode}
           onEventClick={handleEventSelect}
