@@ -1,37 +1,44 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB = process.env.MONGODB_DB || "test";
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+// Reuse the connection across hot reloads (dev) and route invocations (prod).
+if (!globalThis.__gloriaMongoose) {
+  globalThis.__gloriaMongoose = { conn: null, promise: null };
 }
-
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+const cached = globalThis.__gloriaMongoose;
 
 async function dbConnect() {
+  const uri = process.env.MONGODB_URI;
+
+  // Read the env var at call time, not module load time, so `next build`
+  // succeeds even when the production secret is only set on the host.
+  if (!uri) {
+    throw new Error(
+      "MONGODB_URI is not set. Add it to .env.local locally or to the Render environment."
+    );
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
+    cached.promise = mongoose
+      .connect(uri, {
+        dbName: MONGODB_DB,
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 15000,
+        maxPoolSize: 10,
+      })
+      .then((instance) => instance);
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+  } catch (error) {
     cached.promise = null;
-    throw e;
+    throw error;
   }
 
   return cached.conn;

@@ -3,6 +3,11 @@ import dbConnect from '@/lib/dbConnect';
 import Event from '@/app/models/Event';
 import mongoose from 'mongoose';
 
+// Gloria serves this API from its own Node runtime; never pre-render it.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 export async function GET(request, { params }) {
   try {
     await dbConnect();

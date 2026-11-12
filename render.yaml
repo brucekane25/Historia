@@ -1,21 +1,31 @@
-# services:
-# - type: web
-  # name: next-js
-  # runtime: node
-  # plan: starter
-  # buildCommand: yarn; yarn build
-  # startCommand: yarn start
-  # autoDeploy: false
-  # envVars:
-  # - key: NODE_ENV
-    # value: production
-Uncomment the following to deploy this app as a static site on render
-- type: web
-  name: nextjs-static
-  runtime: static
-  buildCommand: npm i; npm run build
-  staticPublishPath: out
-  pullRequestPreviewsEnabled: true     # optional
-  envVars:
-  - key: NODE_ENV
-    value: production
+# Render Blueprint for Gloria.
+#
+# Gloria is a dynamic Next.js app: the /api/events/* route handlers connect to
+# MongoDB at request time, so it MUST be deployed as a Node web service.
+# It cannot be deployed with `runtime: static` / `staticPublishPath: out`.
+services:
+  - type: web
+    name: gloria
+    runtime: node
+    # Change to `starter` (or higher) for an always-on instance.
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      # Database the app reads/writes. The events collection currently lives in
+      # the `test` database on the shared cluster. Change if you move the data.
+      - key: MONGODB_DB
+        value: test
+      # Set this in the Render dashboard (Blueprint sync: false = secret prompt).
+      - key: MONGODB_URI
+        sync: false
