@@ -33,7 +33,7 @@ import { getCategoryColor } from "@/lib/category-colors";
 const EARTH_RADIUS = 1;
 const PIN_RADIUS = 1.006;
 const AUTO_ROTATE_SPEED = 0.055;
-const ARC_COLORS = ["#22d3ee", "#a78bfa", "#f59e0b", "#34d399", "#fb7185"];
+const ARC_COLORS = ["#d9553a", "#c9a44c", "#4f9c8a", "#b5657c", "#4a7fa8"];
 
 function latLonToVector3(lat, lon, radius = PIN_RADIUS) {
   const phi = (90 - lat) * (Math.PI / 180);
@@ -127,12 +127,12 @@ function Atmosphere({ isDark }) {
       `,
       uniforms: {
         uInner: {
-          value: new THREE.Color(isDark ? "#1e3a8a" : "#c7d2fe"),
+          value: new THREE.Color(isDark ? "#17130a" : "#efe7d5"),
         },
         uOuter: {
-          value: new THREE.Color(isDark ? "#22d3ee" : "#818cf8"),
+          value: new THREE.Color(isDark ? "#c9a44c" : "#b8912f"),
         },
-        uIntensity: { value: isDark ? 0.95 : 0.45 },
+        uIntensity: { value: isDark ? 0.62 : 0.4 },
         uTime: { value: 0 },
       },
       transparent: true,
@@ -322,7 +322,7 @@ function WorldBorders({ isDark }) {
   return (
     <lineSegments geometry={geometry}>
       <lineBasicMaterial
-        color={isDark ? "#7dd3fc" : "#475569"}
+        color={isDark ? "#4f9c8a" : "var(--parchment-dim)"}
         transparent
         opacity={isDark ? 0.2 : 0.24}
         depthWrite={false}
@@ -371,7 +371,7 @@ function Graticule({ isDark }) {
   return (
     <lineSegments geometry={geometry}>
       <lineBasicMaterial
-        color={isDark ? "#67e8f9" : "#64748b"}
+        color={isDark ? "#4f9c8a" : "var(--parchment-dim)"}
         transparent
         opacity={isDark ? 0.07 : 0.09}
         depthWrite={false}
@@ -560,22 +560,20 @@ function EventPoints({ events, onEventSelect, isDark }) {
           style={{ pointerEvents: "none" }}
         >
           <div
-            className="max-w-[240px] rounded-xl px-3 py-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
+            className="max-w-[240px] rounded-[3px] px-3 py-2 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
             style={{
-              background: isDark
-                ? "rgba(9,12,24,0.94)"
-                : "rgba(255,255,255,0.96)",
+              background: "var(--plate)",
               border: isDark
-                ? "1px solid rgba(103,232,249,0.32)"
-                : "1px solid rgba(15,23,42,0.12)",
+                ? "1px solid color-mix(in srgb, var(--verdigris) 32%, transparent)"
+                : "1px solid var(--hairline)",
               boxShadow: isDark
-                ? "0 12px 40px rgba(34,211,238,0.22)"
-                : "0 12px 30px rgba(15,23,42,0.14)",
+                ? "0 12px 40px color-mix(in srgb, var(--verdigris) 22%, transparent)"
+                : "0 12px 30px var(--hairline)",
             }}
           >
             <p
               className="text-[11px] font-semibold leading-snug line-clamp-3"
-              style={{ color: isDark ? "#f8fafc" : "#0f172a" }}
+              style={{ color: "var(--parchment)" }}
             >
               {hoveredEvent.title}
             </p>
@@ -708,11 +706,9 @@ function SelectionMarker({ event, isDark, glowTexture, onEventSelect }) {
             clickEvent.stopPropagation();
             onEventSelect?.(event);
           }}
-          className="max-w-[240px] cursor-pointer rounded-2xl px-3.5 py-2.5 shadow-2xl backdrop-blur-xl transition-transform duration-150 hover:scale-[1.03]"
+          className="max-w-[240px] cursor-pointer rounded-[4px] px-3.5 py-2.5 shadow-2xl backdrop-blur-xl transition-transform duration-150 hover:scale-[1.03]"
           style={{
-            background: isDark
-              ? "rgba(9,12,24,0.96)"
-              : "rgba(255,255,255,0.97)",
+            background: "var(--plate)",
             border: `1px solid ${color}55`,
             boxShadow: `0 16px 50px ${color}33`,
           }}
@@ -730,20 +726,20 @@ function SelectionMarker({ event, isDark, glowTexture, onEventSelect }) {
             </span>
             <span
               className="ml-auto text-[10px] font-bold tabular-nums"
-              style={{ color: isDark ? "#e2e8f0" : "#334155" }}
+              style={{ color: isDark ? "var(--parchment)" : "var(--parchment-dim)" }}
             >
               {Number.isFinite(event.year) ? event.year : "—"}
             </span>
           </div>
           <p
             className="mt-1.5 text-[11px] font-medium leading-snug line-clamp-3"
-            style={{ color: isDark ? "#f8fafc" : "#0f172a" }}
+            style={{ color: "var(--parchment)" }}
           >
             {event.title}
           </p>
           <p
             className="mt-1.5 text-[9px]"
-            style={{ color: isDark ? "#94a3b8" : "#64748b" }}
+            style={{ color: "var(--parchment-dim)" }}
           >
             Click to open details →
           </p>
@@ -995,14 +991,14 @@ function HudButton({ active = false, onClick, icon: Icon, label, isDark }) {
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`pointer-events-auto flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[10px] font-medium transition-all duration-200 backdrop-blur-xl ${
+      className={`pointer-events-auto flex items-center gap-1.5 rounded-[3px] border px-2.5 py-1.5 eyebrow transition-all duration-200 backdrop-blur-xl ${
         active
           ? isDark
-            ? "border-cyan-400/40 bg-cyan-400/12 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.16)]"
-            : "border-cyan-600/30 bg-cyan-500/10 text-cyan-700"
+            ? "border-cinnabar/50 bg-cinnabar/12 text-cinnabar shadow-[0_0_0_1px_color-mix(in_srgb,var(--cinnabar)_25%,transparent)]"
+            : "border-cinnabar/45 bg-cinnabar/10 text-cinnabar"
           : isDark
-            ? "border-white/8 bg-white/4 text-white/45 hover:border-white/15 hover:bg-white/8 hover:text-white/80"
-            : "border-black/8 bg-white/50 text-gray-500 hover:border-black/15 hover:bg-white/80 hover:text-gray-800"
+            ? "border-hairline bg-parchment/4 text-parchment/55 hover:border-hairline-strong hover:bg-parchment/8 hover:text-parchment"
+            : "border-hairline bg-plate text-dim hover:border-hairline-strong hover:bg-plate-strong hover:text-parchment"
       }`}
     >
       {Icon && <Icon className="h-3 w-3" />}
@@ -1027,25 +1023,23 @@ function CategoryLegend({ isDark }) {
 
   return (
     <div
-      className={`pointer-events-auto hidden rounded-2xl p-3.5 md:block ${
+      className={`pointer-events-auto hidden rounded-[4px] p-3.5 md:block ${
         isDark ? "glass-dark" : "glass"
       }`}
       style={{
         border: isDark
-          ? "1px solid rgba(139,92,246,0.18)"
-          : "1px solid rgba(139,92,246,0.12)",
-        background: isDark
-          ? "rgba(15,17,30,0.72)"
-          : "rgba(255,255,255,0.78)",
+          ? "1px solid color-mix(in srgb, var(--cinnabar) 18%, transparent)"
+          : "1px solid color-mix(in srgb, var(--cinnabar) 12%, transparent)",
+        background: "var(--plate)",
         backdropFilter: "blur(18px)",
         boxShadow: isDark
           ? "0 8px 32px rgba(0,0,0,0.35)"
-          : "0 8px 32px rgba(139,92,246,0.08)",
+          : "0 8px 32px color-mix(in srgb, var(--cinnabar) 8%, transparent)",
       }}
     >
       <p
         className={`mb-2.5 text-[9px] font-bold tracking-[0.22em] ${
-          isDark ? "text-purple-300/80" : "text-purple-600"
+          isDark ? "text-cinnabar/80" : "text-cinnabar"
         }`}
       >
         CATEGORIES
@@ -1063,8 +1057,8 @@ function CategoryLegend({ isDark }) {
             <span
               className={`text-[10px] capitalize transition-colors ${
                 isDark
-                  ? "text-white/45 group-hover:text-white/80"
-                  : "text-gray-500 group-hover:text-gray-800"
+                  ? "text-parchment/45 group-hover:text-parchment/80"
+                  : "text-dim group-hover:text-parchment"
               }`}
             >
               {category}
@@ -1188,8 +1182,8 @@ const GlobeComponent = ({
       className="relative h-full w-full overflow-hidden"
       style={{
         background: isDark
-          ? "radial-gradient(ellipse at 50% 45%, #0b1730 0%, #070b18 55%, #03050c 100%)"
-          : "radial-gradient(ellipse at 50% 45%, #eef4ff 0%, #e2e8f0 60%, #cbd5e1 100%)",
+          ? "radial-gradient(ellipse at 50% 45%, #131a17 0%, #0d1110 55%, #070a09 100%)"
+          : "radial-gradient(ellipse at 50% 45%, #f6f1e4 0%, #efe9da 60%, #e5decb 100%)",
       }}
     >
       {/* Ambient light blooms behind the canvas */}
@@ -1198,24 +1192,24 @@ const GlobeComponent = ({
           className="absolute -left-[14%] top-[8%] h-[42%] w-[42%] rounded-full blur-[110px]"
           style={{
             background: isDark
-              ? "rgba(34,211,238,0.13)"
-              : "rgba(99,102,241,0.10)",
+              ? "color-mix(in srgb, var(--verdigris) 13%, transparent)"
+              : "color-mix(in srgb, var(--cinnabar) 10%, transparent)",
           }}
         />
         <div
           className="absolute -right-[10%] bottom-[2%] h-[38%] w-[38%] rounded-full blur-[120px]"
           style={{
             background: isDark
-              ? "rgba(139,92,246,0.16)"
-              : "rgba(14,165,233,0.10)",
+              ? "color-mix(in srgb, var(--cinnabar) 16%, transparent)"
+              : "color-mix(in srgb, var(--verdigris) 10%, transparent)",
           }}
         />
         <div
           className="absolute left-[38%] top-[42%] h-[26%] w-[26%] rounded-full blur-[100px]"
           style={{
             background: isDark
-              ? "rgba(16,185,129,0.07)"
-              : "rgba(16,185,129,0.06)",
+              ? "color-mix(in srgb, var(--verdigris) 7%, transparent)"
+              : "color-mix(in srgb, var(--verdigris) 6%, transparent)",
           }}
         />
       </div>
@@ -1246,17 +1240,17 @@ const GlobeComponent = ({
             <directionalLight
               position={[5, 2.4, 5]}
               intensity={isDark ? 1.15 : 1.35}
-              color={isDark ? "#f8fbff" : "#fffaf0"}
+              color={"var(--parchment)"}
             />
             <pointLight
               position={[-5, -3, -5]}
               intensity={isDark ? 0.5 : 0.3}
-              color="#6366f1"
+              color="#d9553a"
             />
             <pointLight
               position={[3, -2, 2]}
               intensity={0.25}
-              color={isDark ? "#8b5cf6" : "#f59e0b"}
+              color={isDark ? "#d9553a" : "#c9a44c"}
             />
 
             <GlobeRotation
@@ -1334,7 +1328,7 @@ const GlobeComponent = ({
         style={{
           boxShadow: isDark
             ? "inset 0 0 180px 40px rgba(0,0,0,0.55)"
-            : "inset 0 0 160px 30px rgba(148,163,184,0.22)",
+            : "inset 0 0 160px 30px color-mix(in srgb, var(--parchment) 22%, transparent)",
         }}
       />
 
@@ -1342,30 +1336,28 @@ const GlobeComponent = ({
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[1010] flex items-start justify-between gap-3 px-3 pb-3 pt-20 lg:px-5 lg:pb-5 lg:pt-24">
         <div className="max-w-[280px]">
           <div
-            className={`pointer-events-auto rounded-2xl p-3.5 ${
+            className={`pointer-events-auto rounded-[4px] p-3.5 ${
               isDark ? "glass-dark" : "glass"
             }`}
             style={{
               border: isDark
-                ? "1px solid rgba(34,211,238,0.18)"
-                : "1px solid rgba(15,23,42,0.08)",
-              background: isDark
-                ? "rgba(9,13,26,0.74)"
-                : "rgba(255,255,255,0.8)",
+                ? "1px solid color-mix(in srgb, var(--verdigris) 18%, transparent)"
+                : "1px solid var(--hairline)",
+              background: "var(--plate)",
               backdropFilter: "blur(18px)",
               boxShadow: isDark
                 ? "0 10px 40px rgba(0,0,0,0.35)"
-                : "0 10px 30px rgba(15,23,42,0.08)",
+                : "0 10px 30px var(--hairline)",
             }}
           >
             <div className="flex items-center gap-2">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-verdigris opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-verdigris" />
               </span>
               <span
                 className={`text-[9px] font-bold tracking-[0.24em] ${
-                  isDark ? "text-white/65" : "text-gray-600"
+                  isDark ? "text-parchment/65" : "text-dim"
                 }`}
               >
                 LIVE HISTORY NETWORK
@@ -1375,14 +1367,14 @@ const GlobeComponent = ({
             <div className="mt-2 flex items-baseline gap-2">
               <span
                 className={`text-2xl font-semibold tabular-nums leading-none ${
-                  isDark ? "text-white" : "text-gray-900"
+                  "text-parchment"
                 }`}
               >
                 {stats.count.toLocaleString()}
               </span>
               <span
                 className={`text-[10px] ${
-                  isDark ? "text-white/45" : "text-gray-500"
+                  isDark ? "text-parchment/45" : "text-dim"
                 }`}
               >
                 events on the globe
@@ -1391,7 +1383,7 @@ const GlobeComponent = ({
 
             <div
               className={`mt-1.5 flex items-center gap-2 text-[9px] ${
-                isDark ? "text-white/35" : "text-gray-400"
+                isDark ? "text-parchment/35" : "text-dim"
               }`}
             >
               <span>{stats.categories} {stats.categories === 1 ? "category" : "categories"}</span>
@@ -1462,12 +1454,12 @@ const GlobeComponent = ({
       <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[1010] flex justify-center px-4">
         <div
           className={`rounded-full px-4 py-2 text-[10px] backdrop-blur-xl ${
-            isDark ? "bg-black/35 text-white/45" : "bg-white/60 text-gray-500"
+            isDark ? "bg-black/35 text-parchment/45" : "bg-plate text-dim"
           }`}
           style={{
             border: isDark
-              ? "1px solid rgba(255,255,255,0.07)"
-              : "1px solid rgba(15,23,42,0.06)",
+              ? "1px solid color-mix(in srgb, var(--parchment) 7%, transparent)"
+              : "1px solid var(--hairline)",
           }}
         >
           Drag to orbit · Scroll to zoom · Click a light to explore

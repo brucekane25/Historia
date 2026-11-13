@@ -4,24 +4,24 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils"
 
 const chipVariants = cva(
-  "inline-flex items-center justify-center rounded-full text-sm font-medium ring-offset-background transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer",
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[3px] font-mono text-[10px] font-medium uppercase tracking-[0.14em] transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
   {
     variants: {
       variant: {
         default:
-          "border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-700 dark:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white",
+          "border border-hairline bg-transparent text-dim hover:border-hairline-strong hover:text-parchment",
         success:
-          "border border-purple-500/30 bg-purple-500/15 text-purple-600 dark:text-purple-300 hover:bg-purple-500/25 shadow-sm shadow-purple-500/10",
+          "border border-verdigris/45 bg-verdigris/12 text-verdigris hover:bg-verdigris/20",
         destructive:
-          "border border-purple-500/30 bg-purple-500/15 text-purple-600 dark:text-purple-300 hover:bg-purple-500/25 shadow-sm shadow-purple-500/10",
+          "border border-cinnabar/45 bg-cinnabar/12 text-cinnabar hover:bg-cinnabar/20",
         outline:
-          "border border-gray-200 dark:border-white/10 bg-transparent text-gray-600 dark:text-white/50 hover:bg-gray-50 dark:hover:bg-white/5",
+          "border border-hairline bg-transparent text-dim hover:text-parchment",
       },
       size: {
-        default: "h-9 px-3 py-1.5 text-xs",
-        sm: "h-7 px-2.5 text-[11px]",
-        lg: "h-10 px-4 text-sm",
-        icon: "h-9 w-9",
+        default: "h-8 px-3 py-1.5",
+        sm: "h-7 px-2.5",
+        lg: "h-9 px-4",
+        icon: "size-8",
       },
     },
     defaultVariants: {

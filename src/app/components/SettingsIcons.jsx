@@ -30,33 +30,33 @@ const SettingsIcons = ({
       label: "Timeline",
       active: leftOpen,
       onClick: () => setLeftOpen(!leftOpen),
-      color: "#8b5cf6",
+      color: "#d9553a",
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
       label: "Stats",
       active: statsOpen,
       onClick: () => setStatsOpen(!statsOpen),
-      color: "#06b6d4",
+      color: "#4f9c8a",
     },
     {
       icon: <Bookmark className="w-5 h-5" />,
       label: "Saved",
       onClick: () => setBookmarksOpen(true),
-      color: "#f59e0b",
+      color: "#c9a44c",
     },
     {
       icon: <Dice5 className="w-5 h-5" />,
       label: "Random",
       onClick: () => setIsOpen(!isOpen),
-      color: "#ec4899",
+      color: "#b5657c",
     },
     {
       icon: <Settings className="w-5 h-5" />,
       label: "Tweaks",
       active: settingsOpen,
       onClick: () => setSettingsOpen(!settingsOpen),
-      color: "#10b981",
+      color: "#4f9c8a",
     },
   ];
 
@@ -68,18 +68,18 @@ const SettingsIcons = ({
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1025]"
     >
       <motion.div
-        className={`flex items-center gap-1 px-2 py-2 rounded-2xl transition-all duration-300 ${
+        className={`flex items-center gap-1 px-2 py-2 rounded-[4px] transition-all duration-300 ${
           isExpanded ? 'gap-2' : 'gap-1'
         }`}
         style={{
-          backgroundColor: isDark ? "rgba(15,17,30,0.85)" : "rgba(255,255,255,0.85)",
+          backgroundColor: "var(--plate)",
           backdropFilter: "blur(16px)",
           border: isDark 
-            ? "1px solid rgba(139,92,246,0.2)" 
-            : "1px solid rgba(139,92,246,0.15)",
+            ? "1px solid color-mix(in srgb, var(--cinnabar) 20%, transparent)" 
+            : "1px solid color-mix(in srgb, var(--cinnabar) 15%, transparent)",
           boxShadow: isDark 
-            ? "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,92,246,0.1) inset"
-            : "0 8px 32px rgba(139,92,246,0.15)",
+            ? "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px color-mix(in srgb, var(--cinnabar) 10%, transparent) inset"
+            : "0 8px 32px color-mix(in srgb, var(--cinnabar) 15%, transparent)",
         }}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
@@ -92,14 +92,14 @@ const SettingsIcons = ({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.05 }}
             onClick={btn.onClick}
-            className={`group relative p-2.5 rounded-xl flex items-center justify-center transition-all duration-200 ${
+            className={`group relative p-2.5 rounded-[3px] flex items-center justify-center transition-all duration-200 ${
               btn.active 
                 ? isDark 
-                  ? "bg-white/10 text-white" 
-                  : "bg-black/10 text-gray-900"
+                  ? "bg-parchment/10 text-parchment" 
+                  : "bg-ink/10 text-parchment"
                 : isDark
-                  ? "text-white/50 hover:text-white hover:bg-white/10"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-black/10"
+                  ? "text-parchment/50 hover:text-parchment hover:bg-parchment/10"
+                  : "text-dim hover:text-parchment hover:bg-ink/10"
             }`}
             style={{
               border: btn.active 
@@ -125,10 +125,10 @@ const SettingsIcons = ({
             {/* Tooltip */}
             <div className="absolute bottom-full mb-2 px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
               style={{
-                backgroundColor: isDark ? "rgba(15,17,30,0.95)" : "rgba(255,255,255,0.95)",
-                color: isDark ? "#e5e7eb" : "#111827",
+                backgroundColor: "var(--plate)",
+                color: "var(--parchment)",
                 backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                boxShadow: "0 4px 12px color-mix(in srgb, var(--parchment) 15%, transparent)",
               }}
             >
               {btn.label}
@@ -141,8 +141,8 @@ const SettingsIcons = ({
           className="w-px h-8 mx-1"
           style={{
             background: isDark 
-              ? "linear-gradient(180deg, transparent, rgba(255,255,255,0.15), transparent)"
-              : "linear-gradient(180deg, transparent, rgba(0,0,0,0.1), transparent)",
+              ? "linear-gradient(180deg, transparent, color-mix(in srgb, var(--parchment) 15%, transparent), transparent)"
+              : "linear-gradient(180deg, transparent, color-mix(in srgb, var(--parchment) 10%, transparent), transparent)",
           }}
         />
 
@@ -152,7 +152,7 @@ const SettingsIcons = ({
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.25 }}
           onClick={() => setLightMode(!lightMode)}
-          className="group relative p-2.5 rounded-xl flex items-center justify-center transition-all duration-200 text-white/50 hover:text-white hover:bg-white/10"
+          className="group relative p-2.5 rounded-[3px] flex items-center justify-center transition-all duration-200 text-parchment/50 hover:text-parchment hover:bg-parchment/10"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -161,10 +161,10 @@ const SettingsIcons = ({
           {/* Tooltip */}
           <div className="absolute bottom-full mb-2 px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
             style={{
-              backgroundColor: isDark ? "rgba(15,17,30,0.95)" : "rgba(255,255,255,0.95)",
-              color: isDark ? "#e5e7eb" : "#111827",
+              backgroundColor: "var(--plate)",
+              color: "var(--parchment)",
               backdropFilter: "blur(8px)",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              boxShadow: "0 4px 12px color-mix(in srgb, var(--parchment) 15%, transparent)",
             }}
           >
             {lightMode ? 'Dark' : 'Light'}
@@ -176,8 +176,8 @@ const SettingsIcons = ({
           className="w-px h-8 mx-1"
           style={{
             background: isDark 
-              ? "linear-gradient(180deg, transparent, rgba(255,255,255,0.15), transparent)"
-              : "linear-gradient(180deg, transparent, rgba(0,0,0,0.1), transparent)",
+              ? "linear-gradient(180deg, transparent, color-mix(in srgb, var(--parchment) 15%, transparent), transparent)"
+              : "linear-gradient(180deg, transparent, color-mix(in srgb, var(--parchment) 10%, transparent), transparent)",
           }}
         />
 
@@ -187,7 +187,7 @@ const SettingsIcons = ({
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
           onClick={() => setCommandPaletteOpen(true)}
-          className="group relative p-2.5 rounded-xl flex items-center justify-center transition-all duration-200 text-white/50 hover:text-white hover:bg-white/10"
+          className="group relative p-2.5 rounded-[3px] flex items-center justify-center transition-all duration-200 text-parchment/50 hover:text-parchment hover:bg-parchment/10"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -196,10 +196,10 @@ const SettingsIcons = ({
           {/* Tooltip */}
           <div className="absolute bottom-full mb-2 px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
             style={{
-              backgroundColor: isDark ? "rgba(15,17,30,0.95)" : "rgba(255,255,255,0.95)",
-              color: isDark ? "#e5e7eb" : "#111827",
+              backgroundColor: "var(--plate)",
+              color: "var(--parchment)",
               backdropFilter: "blur(8px)",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              boxShadow: "0 4px 12px color-mix(in srgb, var(--parchment) 15%, transparent)",
             }}
           >
             ⌘K
@@ -212,13 +212,7 @@ const SettingsIcons = ({
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.35 }}
           onClick={onSurpriseMe}
-          className="group relative p-2.5 rounded-xl flex items-center justify-center transition-all duration-200"
-          style={{
-            background: isDark 
-              ? "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.2))"
-              : "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(236,72,153,0.1))",
-            color: isDark ? "#c084fc" : "#a855f7",
-          }}
+          className="group relative p-2.5 rounded-[3px] flex items-center justify-center transition-all duration-200 text-dim hover:text-cinnabar"
           whileHover={{ scale: 1.1, rotate: 5 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -227,10 +221,10 @@ const SettingsIcons = ({
           {/* Tooltip */}
           <div className="absolute bottom-full mb-2 px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
             style={{
-              backgroundColor: isDark ? "rgba(15,17,30,0.95)" : "rgba(255,255,255,0.95)",
-              color: isDark ? "#e5e7eb" : "#111827",
+              backgroundColor: "var(--plate)",
+              color: "var(--parchment)",
               backdropFilter: "blur(8px)",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              boxShadow: "0 4px 12px color-mix(in srgb, var(--parchment) 15%, transparent)",
             }}
           >
             Surprise!

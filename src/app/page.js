@@ -352,6 +352,10 @@ export default function Home() {
 
   return (
     <div className={`${isDark ? "dark" : ""}`}>
+      {/* Paper grain + vignette: the whole app reads as one printed sheet. */}
+      <div className="page-grain" aria-hidden="true" />
+      <div className="page-vignette" aria-hidden="true" />
+
       <Onboarding
         forceOpen={showTutorial}
         onClose={() => setShowTutorial(false)}
@@ -423,8 +427,8 @@ export default function Home() {
             onClick={() => setIsSlider(!isSlider)}
             className={`rounded-full ${
               isDark
-                ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
-                : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                ? "bg-cinnabar/20 text-cinnabar hover:bg-cinnabar/30"
+                : "bg-cinnabar/12 text-cinnabar hover:bg-cinnabar/12"
             }`}
           >
             <ArrowDown />
@@ -490,15 +494,15 @@ export default function Home() {
               onClick={() => setCommandPaletteOpen(true)}
               title="Search events"
               aria-label="Search events"
-              className={`fixed left-4 top-4 z-[1025] flex h-10 w-10 items-center justify-center rounded-xl shadow-2xl backdrop-blur-xl transition-transform hover:scale-105 ${
+              className={`fixed left-4 top-4 z-[1025] flex h-10 w-10 items-center justify-center rounded-[3px] shadow-2xl backdrop-blur-xl transition-transform hover:scale-105 ${
                 isDark
-                  ? "glass-dark text-white/65 hover:text-white"
-                  : "glass text-gray-600 hover:text-gray-900"
+                  ? "glass-dark text-parchment/65 hover:text-parchment"
+                  : "glass text-dim hover:text-parchment"
               }`}
               style={{
                 border: isDark
-                  ? "1px solid rgba(255,255,255,0.08)"
-                  : "1px solid rgba(0,0,0,0.06)",
+                  ? "1px solid color-mix(in srgb, var(--parchment) 8%, transparent)"
+                  : "1px solid color-mix(in srgb, var(--parchment) 6%, transparent)",
               }}
             >
               <Search className="h-4 w-4" />
@@ -590,17 +594,17 @@ export default function Home() {
             {loadError && (
               <div className="pointer-events-none absolute inset-x-4 top-24 z-[1005] flex justify-center px-2">
                 <div
-                  className={`pointer-events-auto flex max-w-lg items-center gap-3 rounded-2xl px-4 py-3 text-sm shadow-2xl backdrop-blur-xl ${
+                  className={`pointer-events-auto flex max-w-lg items-center gap-3 rounded-[4px] px-4 py-3 text-sm shadow-2xl backdrop-blur-xl ${
                     isDark
-                      ? "border border-red-400/20 bg-[#170d14]/95 text-red-100"
-                      : "border border-red-200 bg-white/95 text-red-700"
+                      ? "border border-cinnabar/20 bg-[var(--plate)]/95 text-cinnabar"
+                      : "border border-cinnabar/35 bg-plate-strong text-cinnabar"
                   }`}
                 >
                   <span className="min-w-0 flex-1">{loadError}</span>
                   <Button
                     size="sm"
                     onClick={() => setRetryCount((value) => value + 1)}
-                    className="shrink-0 rounded-xl bg-red-500 text-white hover:bg-red-400"
+                    className="shrink-0 rounded-[3px] bg-cinnabar/12 text-parchment hover:bg-cinnabar/12"
                   >
                     Retry
                   </Button>
@@ -638,17 +642,17 @@ export default function Home() {
                       className="absolute inset-0 z-10 flex items-center justify-center"
                       style={{
                         background: isDark 
-                          ? "radial-gradient(ellipse at center, #0f1729 0%, #0a0c1a 70%, #050714 100%)" 
-                          : "radial-gradient(ellipse at center, #f1f5f9 0%, #e2e8f0 70%, #cbd5e1 100%)",
+                          ? "radial-gradient(ellipse at center, #0f1729 0%, var(--plate) 70%, #050714 100%)" 
+                          : "radial-gradient(ellipse at center, var(--parchment) 0%, var(--parchment) 70%, var(--parchment) 100%)",
                       }}
                     >
                       <div className="flex flex-col items-center gap-4">
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                          className={`w-12 h-12 rounded-full border-2 ${isDark ? "border-purple-500/30" : "border-purple-300/30"} border-t-purple-500`}
+                          className={`w-12 h-12 rounded-full border-2 ${"border-cinnabar/30"} border-t-cinnabar`}
                         />
-                        <span className={`text-sm font-medium ${isDark ? "text-white/60" : "text-gray-500"}`}>
+                        <span className={`text-sm font-medium ${isDark ? "text-parchment/60" : "text-dim"}`}>
                           Loading Globe...
                         </span>
                       </div>

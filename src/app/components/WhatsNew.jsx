@@ -37,18 +37,18 @@ const WhatsNew = ({ lightMode = false }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className={`sm:max-w-[440px] z-[1040] border ${isDark ? "bg-[#0f1120] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>
+      <DialogContent className={`sm:max-w-[440px] z-[1040] border ${isDark ? "bg-[var(--plate)] border-hairline text-parchment" : "bg-plate border-hairline text-parchment"}`}>
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" />
-            <DialogTitle className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <Sparkles className="w-5 h-5 text-cinnabar" />
+            <DialogTitle className={`text-lg font-bold ${"text-parchment"}`}>
               What&apos;s New in Gloria v3.1
             </DialogTitle>
           </div>
         </DialogHeader>
 
         <div className="py-2">
-          <p className={`text-sm mb-4 ${isDark ? "text-white/50" : "text-gray-500"}`}>
+          <p className={`text-sm mb-4 ${isDark ? "text-parchment/50" : "text-dim"}`}>
             Here&apos;s what&apos;s new:
           </p>
           <ul className="space-y-2.5">
@@ -81,14 +81,14 @@ const WhatsNew = ({ lightMode = false }) => {
             ].map((item, i) => (
               <li
                 key={i}
-                className={`flex items-start gap-3 p-2.5 rounded-lg border ${isDark ? "bg-white/[0.03] border-white/[0.04]" : "bg-black/[0.02] border-black/[0.04]"}`}
+                className={`flex items-start gap-3 p-2.5 rounded-[3px] border ${isDark ? "bg-plate/[0.03] border-hairline/[0.04]" : "bg-ink/[0.02] border-hairline/[0.04]"}`}
               >
                 <span className="text-lg">{item.emoji}</span>
                 <div>
-                  <h4 className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <h4 className={`text-sm font-medium ${"text-parchment"}`}>
                     {item.title}
                   </h4>
-                  <p className={`text-xs ${isDark ? "text-white/40" : "text-gray-500"}`}>{item.desc}</p>
+                  <p className={`text-xs ${isDark ? "text-parchment/40" : "text-dim"}`}>{item.desc}</p>
                 </div>
               </li>
             ))}
@@ -98,7 +98,7 @@ const WhatsNew = ({ lightMode = false }) => {
         <DialogFooter>
           <Button
             onClick={handleClose}
-            className="bg-purple-600 hover:bg-purple-500 text-white w-full"
+            className="bg-cinnabar/12 hover:bg-cinnabar/12 text-parchment w-full"
           >
             Awesome!
           </Button>

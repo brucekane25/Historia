@@ -14,6 +14,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { wikiImage } from "@/lib/wiki-image";
 
 function titleRelevance(title, query) {
     const text = (title || "").toLowerCase();
@@ -280,15 +281,13 @@ const CommandPalette = ({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.98 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative w-full max-w-[520px] mx-4 rounded-2xl shadow-2xl overflow-hidden"
+                    className="relative w-full max-w-[520px] mx-4 rounded-[4px] shadow-2xl overflow-hidden"
                     style={{
-                        background: isDark
-                            ? "rgba(15,17,30,0.97)"
-                            : "rgba(255,255,255,0.97)",
+                        background: "var(--plate)",
                         backdropFilter: "blur(24px)",
                         border: isDark
-                            ? "1px solid rgba(255,255,255,0.1)"
-                            : "1px solid rgba(0,0,0,0.08)",
+                            ? "1px solid color-mix(in srgb, var(--parchment) 10%, transparent)"
+                            : "1px solid color-mix(in srgb, var(--parchment) 8%, transparent)",
                     }}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -296,13 +295,11 @@ const CommandPalette = ({
                     <div
                         className="flex items-center gap-3 px-4 py-3"
                         style={{
-                            borderBottom: isDark
-                                ? "1px solid rgba(255,255,255,0.06)"
-                                : "1px solid rgba(0,0,0,0.06)",
+                            borderBottom: "1px solid color-mix(in srgb, var(--parchment) 6%, transparent)",
                         }}
                     >
                         <Search
-                            className={`w-4.5 h-4.5 flex-shrink-0 ${isDark ? "text-purple-400" : "text-purple-600"
+                            className={`w-4.5 h-4.5 flex-shrink-0 ${"text-cinnabar"
                                 }`}
                         />
                         <input
@@ -313,14 +310,14 @@ const CommandPalette = ({
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
                             className={`flex-1 bg-transparent border-0 outline-none text-sm ${isDark
-                                ? "text-white placeholder:text-white/30"
-                                : "text-gray-900 placeholder:text-gray-400"
+                                ? "text-parchment placeholder:text-parchment/30"
+                                : "text-parchment placeholder:text-dim"
                                 }`}
                         />
                         <kbd
                             className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${isDark
-                                ? "bg-white/5 text-white/30"
-                                : "bg-black/5 text-gray-400"
+                                ? "bg-parchment/5 text-parchment/30"
+                                : "bg-ink/5 text-dim"
                                 }`}
                         >
                             ESC
@@ -335,7 +332,7 @@ const CommandPalette = ({
                         {allItems.length === 0 && query && (
                             <div className="px-4 py-8 text-center">
                                 <p
-                                    className={`text-sm ${isDark ? "text-white/30" : "text-gray-400"
+                                    className={`text-sm ${isDark ? "text-parchment/30" : "text-dim"
                                         }`}
                                 >
                                     {isSearching
@@ -348,7 +345,7 @@ const CommandPalette = ({
                         {/* Show group headers */}
                         {results.actions.length > 0 && (
                             <div
-                                className={`px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-white/25" : "text-gray-400"
+                                className={`px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-parchment/25" : "text-dim"
                                     }`}
                             >
                                 Actions
@@ -366,19 +363,19 @@ const CommandPalette = ({
                                     onMouseEnter={() => setSelectedIndex(globalIndex)}
                                     className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${selectedIndex === globalIndex
                                         ? isDark
-                                            ? "bg-white/5"
-                                            : "bg-black/3"
+                                            ? "bg-parchment/5"
+                                            : "bg-ink/3"
                                         : ""
                                         }`}
                                 >
                                     <span
-                                        className={`flex-shrink-0 ${isDark ? "text-purple-400" : "text-purple-600"
+                                        className={`flex-shrink-0 ${"text-cinnabar"
                                             }`}
                                     >
                                         {item.icon}
                                     </span>
                                     <span
-                                        className={`text-sm ${isDark ? "text-white/80" : "text-gray-700"
+                                        className={`text-sm ${isDark ? "text-parchment/80" : "text-parchment"
                                             }`}
                                     >
                                         {item.label}
@@ -389,7 +386,7 @@ const CommandPalette = ({
 
                         {results.events.length > 0 && (
                             <div
-                                className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-white/25" : "text-gray-400"
+                                className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-parchment/25" : "text-dim"
                                     }`}
                             >
                                 Events
@@ -407,14 +404,14 @@ const CommandPalette = ({
                                     onMouseEnter={() => setSelectedIndex(globalIndex)}
                                     className={`w-full text-left px-4 py-2 flex items-center gap-3 transition-colors ${selectedIndex === globalIndex
                                         ? isDark
-                                            ? "bg-white/5"
-                                            : "bg-black/3"
+                                            ? "bg-parchment/5"
+                                            : "bg-ink/3"
                                         : ""
                                         }`}
                                 >
                                     {item.thumbnail && (
                                         <img
-                                            src={item.thumbnail}
+                                            src={wikiImage(item.thumbnail)}
                                             alt=""
                                             className="w-8 h-8 rounded object-cover flex-shrink-0"
                                             onError={(e) => { e.currentTarget.style.display = "none"; }}
@@ -422,13 +419,13 @@ const CommandPalette = ({
                                     )}
                                     <div className="min-w-0 flex-1">
                                         <p
-                                            className={`text-sm truncate ${isDark ? "text-white/80" : "text-gray-700"
+                                            className={`text-sm truncate ${isDark ? "text-parchment/80" : "text-parchment"
                                                 }`}
                                         >
                                             {item.label}
                                         </p>
                                         <p
-                                            className={`text-[10px] ${isDark ? "text-white/30" : "text-gray-400"
+                                            className={`text-[10px] ${isDark ? "text-parchment/30" : "text-dim"
                                                 }`}
                                         >
                                             {item.sublabel}
@@ -443,20 +440,18 @@ const CommandPalette = ({
                     <div
                         className="flex items-center justify-between px-4 py-2"
                         style={{
-                            borderTop: isDark
-                                ? "1px solid rgba(255,255,255,0.06)"
-                                : "1px solid rgba(0,0,0,0.06)",
+                            borderTop: "1px solid color-mix(in srgb, var(--parchment) 6%, transparent)",
                         }}
                     >
                         <div
-                            className={`flex items-center gap-1.5 text-[10px] ${isDark ? "text-white/20" : "text-gray-400"
+                            className={`flex items-center gap-1.5 text-[10px] ${isDark ? "text-parchment/20" : "text-dim"
                                 }`}
                         >
                             <Command className="w-3 h-3" />
                             <span>K to open</span>
                         </div>
                         <div
-                            className={`flex items-center gap-3 text-[10px] ${isDark ? "text-white/20" : "text-gray-400"
+                            className={`flex items-center gap-3 text-[10px] ${isDark ? "text-parchment/20" : "text-dim"
                                 }`}
                         >
                             <span>↑↓ navigate</span>

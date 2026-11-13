@@ -35,19 +35,19 @@ function Slider({
       <SliderPrimitive.Track
         data-slot="slider-track"
         className={cn(
-          "relative grow overflow-hidden rounded-full bg-gray-200 dark:bg-white/10 data-[orientation=horizontal]:h-2 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2"
+          "relative grow overflow-hidden rounded-none bg-hairline data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px"
         )}>
         <SliderPrimitive.Range
           data-slot="slider-range"
           className={cn(
-            "absolute bg-purple-500 dark:bg-purple-400 data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
+            "absolute bg-cinnabar data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
           )} />
       </SliderPrimitive.Track>
       {Array.from({ length: _values.length }, (_, index) => (
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="block size-5 shrink-0 rounded-full border-2 border-purple-500 dark:border-purple-400 bg-white dark:bg-[#1a1d2e] shadow-md ring-purple-500/20 transition-all hover:ring-4 hover:scale-110 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50" />
+          className="block size-3.5 shrink-0 rounded-full border border-cinnabar bg-ink shadow-[0_0_0_3px_color-mix(in_srgb,var(--cinnabar)_18%,transparent)] transition-all hover:scale-125 focus-visible:ring-4 focus-visible:ring-cinnabar/30 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50" />
       ))}
     </SliderPrimitive.Root>
   );

@@ -1,12 +1,13 @@
 "use client";
 import { motion } from "framer-motion";
-import { Globe, Sparkles } from "lucide-react";
+import { Globe } from "lucide-react";
 
 const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
     left: `${(i * 37 + 11) % 100}%`,
     top: `${(i * 53 + 7) % 100}%`,
     duration: 2 + ((i * 13) % 20) / 10,
     delay: ((i * 17) % 20) / 10,
+    warm: i % 3 === 0,
 }));
 
 const LoadingScreen = ({ lightMode }) => {
@@ -16,28 +17,30 @@ const LoadingScreen = ({ lightMode }) => {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
-            className={`fixed inset-0 z-[1050] flex flex-col items-center justify-center ${isDark ? "bg-[#0a0c1a]" : "bg-[#f0f2f7]"
-                }`}
+            className="fixed inset-0 z-[1050] flex flex-col items-center justify-center bg-ink"
             style={{
                 background: isDark
-                    ? "radial-gradient(ellipse at center, #0f1729 0%, #0a0c1a 70%, #050714 100%)"
-                    : "radial-gradient(ellipse at center, #f8fafc 0%, #f1f5f9 70%, #e2e8f0 100%)",
+                    ? "radial-gradient(ellipse at center, #141a17 0%, #0d1110 68%, #070a09 100%)"
+                    : "radial-gradient(ellipse at center, #f6f1e4 0%, #efe9da 68%, #e5decb 100%)",
             }}
         >
-            {/* Background particles */}
+            {/* Drifting ink specks */}
             <div className="absolute inset-0 overflow-hidden">
                 {[...PARTICLES].map((particle, i) => (
                     <motion.div
                         key={i}
-                        className="absolute w-1 h-1 rounded-full"
+                        className="absolute w-px h-px rounded-full"
                         style={{
-                            backgroundColor: isDark ? "#8b5cf6" : "#a78bfa",
+                            backgroundColor: particle.warm
+                                ? "var(--cinnabar)"
+                                : "var(--parchment-dim)",
+                            opacity: 0.5,
                             left: particle.left,
                             top: particle.top,
                         }}
                         animate={{
-                            y: [0, -100],
-                            opacity: [0, 1, 0],
+                            y: [0, -90],
+                            opacity: [0, 0.6, 0],
                         }}
                         transition={{
                             duration: particle.duration,
@@ -48,129 +51,72 @@ const LoadingScreen = ({ lightMode }) => {
                     />
                 ))}
             </div>
-            
-            {/* Animated Globe Container */}
-            <div className="relative mb-10">
-                {/* Outer glow rings */}
+
+            {/* Meridian emblem */}
+            <div className="relative mb-9 w-28 h-28 flex items-center justify-center">
                 <motion.div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                        border: `2px solid ${isDark ? "rgba(139,92,246,0.3)" : "rgba(139,92,246,0.2)"}`,
-                    }}
-                    animate={{
-                        scale: [1, 1.5, 1],
-                        opacity: [0.5, 0, 0.5],
-                    }}
-                    transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    }}
+                    className="absolute inset-0 rounded-full border border-hairline"
+                    animate={{ scale: [1, 1.45, 1], opacity: [0.6, 0, 0.6] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                        border: `1px solid ${isDark ? "rgba(139,92,246,0.2)" : "rgba(139,92,246,0.15)"}`,
-                    }}
-                    animate={{
-                        scale: [1, 2, 1],
-                        opacity: [0.3, 0, 0.3],
-                    }}
-                    transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 0.3,
-                    }}
+                    className="absolute inset-3 rounded-full"
+                    style={{ border: "1px solid color-mix(in srgb, var(--cinnabar) 45%, transparent)" }}
+                    animate={{ scale: [1, 1.3, 1], opacity: [0.45, 0, 0.45] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
                 />
-                
-                {/* Main Globe */}
                 <motion.div
-                    animate={{ 
-                        rotate: 360,
-                    }}
-                    transition={{
-                        duration: 20,
-                        repeat: Infinity,
-                        ease: "linear",
-                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
                     className="relative"
                 >
-                    <Globe
-                        className={`w-20 h-20 ${isDark ? "text-purple-400" : "text-purple-600"
-                            }`}
-                        strokeWidth={1}
-                    />
+                    <Globe className="w-14 h-14 text-cinnabar" strokeWidth={0.75} />
                 </motion.div>
-                
-                {/* Center sparkle */}
-                <motion.div
-                    className="absolute inset-0 flex items-center justify-center"
-                    animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.5, 1, 0.5],
-                    }}
-                    transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    }}
-                >
-                    <Sparkles 
-                        className={`w-6 h-6 ${isDark ? "text-purple-300" : "text-purple-500"}`}
-                    />
-                </motion.div>
+                <span className="absolute w-1.5 h-1.5 rounded-full bg-cinnabar" />
             </div>
-            
-            {/* Text */}
+
+            {/* Title block */}
             <motion.h1
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className={`text-3xl font-black tracking-tight mb-3 ${isDark ? "text-white" : "text-gray-900"
-                    }`}
-                style={{
-                    textShadow: isDark 
-                        ? "0 0 40px rgba(139,92,246,0.5)" 
-                        : "0 0 20px rgba(139,92,246,0.3)",
-                }}
+                className="font-display text-4xl sm:text-5xl font-semibold uppercase tracking-[0.26em] text-parchment pl-[0.26em]"
             >
                 Gloria
             </motion.h1>
+
+            <motion.div
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={{ opacity: 1, scaleX: 1 }}
+                transition={{ delay: 0.35, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-4 w-56 h-[3px] border-t border-b border-hairline"
+            />
+
             <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className={`text-sm font-medium ${isDark ? "text-white/50" : "text-gray-500"
-                    }`}
+                transition={{ delay: 0.5 }}
+                className="mt-4 eyebrow text-dim"
             >
-                Loading historical events...
+                Loading historical events
             </motion.p>
-            
-            {/* Progress bar */}
+
+            {/* Indeterminate ruled progress */}
             <motion.div
                 initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 200 }}
-                transition={{ delay: 0.5 }}
-                className={`mt-8 h-1.5 rounded-full overflow-hidden ${isDark ? "bg-white/10" : "bg-black/10"
-                    }`}
+                animate={{ opacity: 1, width: 224 }}
+                transition={{ delay: 0.55 }}
+                className="mt-7 h-px bg-hairline overflow-hidden"
             >
-                <motion.div 
-                    className="h-full rounded-full"
-                    style={{
-                        background: isDark
-                            ? "linear-gradient(90deg, #8b5cf6, #a78bfa, #8b5cf6)"
-                            : "linear-gradient(90deg, #7c3aed, #a78bfa, #7c3aed)",
-                        backgroundSize: '200% 100%',
-                    }}
-                    animate={{
-                        backgroundPosition: ["0% 0%", "200% 0%"],
-                    }}
+                <motion.div
+                    className="h-full bg-cinnabar"
+                    animate={{ x: ["-100%", "100%"] }}
                     transition={{
-                        duration: 1.5,
+                        duration: 1.4,
                         repeat: Infinity,
-                        ease: "linear",
+                        ease: "easeInOut",
                     }}
+                    style={{ width: "60%" }}
                 />
             </motion.div>
         </motion.div>

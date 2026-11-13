@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, ChevronRight, X, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { wikiImage } from "@/lib/wiki-image";
 
 const OnThisDay = ({ lightMode, onEventClick }) => {
     const isDark = !lightMode;
@@ -61,28 +62,26 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
                     className="fixed top-20 left-4 z-[1010] max-w-[320px]"
                 >
                     <div
-                        className={`rounded-2xl shadow-2xl overflow-hidden ${isDark ? "shadow-purple-500/5" : "shadow-black/10"
+                        className={`rounded-[4px] shadow-2xl overflow-hidden ${isDark ? "shadow-cinnabar/5" : "shadow-black/10"
                             }`}
                         style={{
-                            background: isDark
-                                ? "rgba(15,17,30,0.95)"
-                                : "rgba(255,255,255,0.95)",
+                            background: "var(--plate)",
                             backdropFilter: "blur(20px)",
                             border: isDark
-                                ? "1px solid rgba(255,255,255,0.08)"
-                                : "1px solid rgba(0,0,0,0.06)",
-                            color: isDark ? "#e5e7eb" : "#111827",
+                                ? "1px solid color-mix(in srgb, var(--parchment) 8%, transparent)"
+                                : "1px solid color-mix(in srgb, var(--parchment) 6%, transparent)",
+                            color: "var(--parchment)",
                         }}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-4 pt-3 pb-1">
                             <div className="flex items-center gap-2">
                                 <Calendar
-                                    className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"
+                                    className={`w-4 h-4 ${"text-cinnabar"
                                         }`}
                                 />
                                 <span
-                                    className={`text-xs font-semibold ${isDark ? "text-purple-400" : "text-purple-600"
+                                    className={`text-xs font-semibold ${"text-cinnabar"
                                         }`}
                                 >
                                     On This Day — {dateLabel}
@@ -91,8 +90,8 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
                             <button
                                 onClick={handleDismiss}
                                 className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${isDark
-                                    ? "text-white/30 hover:text-white hover:bg-white/10"
-                                    : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+                                    ? "text-parchment/30 hover:text-parchment hover:bg-parchment/10"
+                                    : "text-dim hover:text-parchment hover:bg-ink/5"
                                     }`}
                             >
                                 <X className="w-3.5 h-3.5" />
@@ -104,30 +103,30 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
                             <div className="flex items-start gap-3">
                                 {event.thumbnail && (
                                     <img
-                                        src={event.thumbnail}
+                                        src={wikiImage(event.thumbnail)}
                                         alt=""
-                                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                                        className="w-12 h-12 rounded-[3px] object-cover flex-shrink-0"
                                         onError={(e) => { e.target.style.display = "none"; }}
                                     />
                                 )}
                                 <div className="min-w-0 flex-1">
                                     <p
-                                        className={`text-sm font-medium line-clamp-2 leading-snug ${isDark ? "text-white" : "text-gray-900"
+                                        className={`text-sm font-medium line-clamp-2 leading-snug ${"text-parchment"
                                             }`}
                                     >
                                         {event.title}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span
-                                            className={`text-xs font-bold ${isDark ? "text-purple-400" : "text-purple-600"
+                                            className={`text-xs font-bold ${"text-cinnabar"
                                                 }`}
                                         >
                                             {event.year ?? "—"}
                                         </span>
                                         <span
                                             className={`text-[10px] px-1.5 py-0.5 rounded-full ${isDark
-                                                ? "bg-white/10 text-white/50"
-                                                : "bg-gray-100 text-gray-500"
+                                                ? "bg-parchment/10 text-parchment/50"
+                                                : "bg-muted text-dim"
                                                 }`}
                                         >
                                             {event.category}
@@ -143,9 +142,9 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
                                         onEventClick(event);
                                         handleDismiss();
                                     }}
-                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isDark
-                                        ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
-                                        : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-[3px] text-xs font-medium transition-all ${isDark
+                                        ? "bg-cinnabar/15 text-cinnabar hover:bg-cinnabar/25"
+                                        : "bg-cinnabar/12 text-cinnabar hover:bg-cinnabar/12"
                                         }`}
                                 >
                                     <MapPin className="w-3 h-3" />
@@ -154,16 +153,16 @@ const OnThisDay = ({ lightMode, onEventClick }) => {
                                 {todayEvents.length > 1 && (
                                     <button
                                         onClick={handleNext}
-                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isDark
-                                            ? "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-                                            : "bg-black/5 text-gray-500 hover:bg-black/10 hover:text-gray-900"
+                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-[3px] text-xs font-medium transition-all ${isDark
+                                            ? "bg-parchment/5 text-parchment/50 hover:bg-parchment/10 hover:text-parchment"
+                                            : "bg-ink/5 text-dim hover:bg-ink/10 hover:text-parchment"
                                             }`}
                                     >
                                         Next <ChevronRight className="w-3 h-3" />
                                     </button>
                                 )}
                                 <span
-                                    className={`text-[10px] ml-auto ${isDark ? "text-white/20" : "text-gray-300"
+                                    className={`text-[10px] ml-auto ${isDark ? "text-parchment/20" : "text-dim"
                                         }`}
                                 >
                                     {currentIndex + 1}/{todayEvents.length}

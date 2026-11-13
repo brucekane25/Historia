@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Dice5, X, Sparkles } from "lucide-react";
 import { CATEGORY_COLORS as categoryColors } from "@/lib/category-colors";
+import { wikiImage } from "@/lib/wiki-image";
 
 
 const Pane = ({
@@ -42,21 +43,19 @@ const Pane = ({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 50, scale: 0.95 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute right-4 top-20 bottom-20 flex flex-col rounded-2xl overflow-hidden"
+            className="absolute right-4 top-20 bottom-20 flex flex-col rounded-[4px] overflow-hidden"
             style={{
               width: "340px",
               maxWidth: "calc(100vw - 32px)",
-              backgroundColor: isDark
-                ? "rgba(15,17,30,0.92)"
-                : "rgba(255,255,255,0.92)",
+              backgroundColor: "var(--plate)",
               backdropFilter: "blur(24px)",
-              color: isDark ? "#e5e7eb" : "#111827",
+              color: "var(--parchment)",
               border: isDark
-                ? "1px solid rgba(139,92,246,0.2)"
-                : "1px solid rgba(139,92,246,0.15)",
+                ? "1px solid color-mix(in srgb, var(--cinnabar) 20%, transparent)"
+                : "1px solid color-mix(in srgb, var(--cinnabar) 15%, transparent)",
               boxShadow: isDark
-                ? "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.1)"
-                : "0 25px 50px -12px rgba(0,0,0,0.1), 0 0 30px rgba(139,92,246,0.08)",
+                ? "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px color-mix(in srgb, var(--cinnabar) 10%, transparent)"
+                : "0 25px 50px -12px color-mix(in srgb, var(--parchment) 10%, transparent), 0 0 30px color-mix(in srgb, var(--cinnabar) 8%, transparent)",
               pointerEvents: "auto",
             }}
           >
@@ -65,7 +64,7 @@ const Pane = ({
               <div 
                 className="absolute inset-0"
                 style={{
-                  background: "linear-gradient(90deg, #8b5cf6, #ec4899, #8b5cf6)",
+                  background: "linear-gradient(90deg, var(--cinnabar) 0%, color-mix(in srgb, var(--brass) 55%, transparent) 55%, transparent 100%)",
                   backgroundSize: '200% 100%',
                   animation: 'shimmer 2s linear infinite',
                 }}
@@ -75,15 +74,15 @@ const Pane = ({
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-4 pb-3 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <Sparkles className={`w-5 h-5 ${isDark ? "text-pink-400" : "text-pink-600"}`} />
+                <Sparkles className={`w-5 h-5 ${"text-cinnabar"}`} />
                 <span className="text-lg font-bold">Random Events</span>
               </div>
               <div className="flex gap-2 items-center">
                 <button
                   onClick={randomizeEvents}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-105 ${isDark
-                    ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
-                    : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-semibold transition-all hover:scale-105 ${isDark
+                    ? "bg-cinnabar/20 text-cinnabar hover:bg-cinnabar/30"
+                    : "bg-cinnabar/12 text-cinnabar hover:bg-cinnabar/12"
                     }`}
                 >
                   <Dice5 className="w-3.5 h-3.5" />
@@ -91,9 +90,9 @@ const Pane = ({
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-105 ${isDark
-                    ? "text-white/40 hover:text-white hover:bg-white/10"
-                    : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+                  className={`w-8 h-8 rounded-[3px] flex items-center justify-center transition-all hover:scale-105 ${isDark
+                    ? "text-parchment/40 hover:text-parchment hover:bg-parchment/10"
+                    : "text-dim hover:text-parchment hover:bg-ink/5"
                     }`}
                 >
                   <X className="w-4 h-4" />
@@ -104,18 +103,18 @@ const Pane = ({
             <div className="px-4 pb-4 overflow-y-auto flex-1">
               <ul className="space-y-3">
                 {randomEvents.map((event) => {
-                  const catColor = categoryColors[event.category] || "#6b7280";
+                  const catColor = categoryColors[event.category] || "var(--parchment-dim)";
                   return (
                     <li
                       key={event._id}
-                      className="rounded-xl p-3 cursor-pointer transition-all hover:scale-[1.01] hover:shadow-lg"
+                      className="rounded-[3px] p-3 cursor-pointer transition-all hover:scale-[1.01] hover:shadow-lg"
                       style={{
                         background: isDark
-                          ? "rgba(255,255,255,0.04)"
-                          : "rgba(0,0,0,0.02)",
+                          ? "color-mix(in srgb, var(--parchment) 4%, transparent)"
+                          : "color-mix(in srgb, var(--parchment) 2%, transparent)",
                         border: isDark
-                          ? "1px solid rgba(255,255,255,0.06)"
-                          : "1px solid rgba(0,0,0,0.05)",
+                          ? "1px solid color-mix(in srgb, var(--parchment) 6%, transparent)"
+                          : "1px solid color-mix(in srgb, var(--parchment) 5%, transparent)",
                       }}
                       onClick={() => {
                         onEventClick(event);
@@ -125,14 +124,14 @@ const Pane = ({
                       <div className="flex items-center gap-3">
                         {/* Thumbnail */}
                         <div
-                          className={`h-14 w-14 rounded-lg flex-shrink-0 overflow-hidden ${!event.thumbnail
-                            ? isDark ? "bg-white/5" : "bg-gray-100"
+                          className={`h-14 w-14 rounded-[3px] flex-shrink-0 overflow-hidden ${!event.thumbnail
+                            ? isDark ? "bg-parchment/5" : "bg-muted"
                             : ""
                             }`}
                         >
                           {event.thumbnail && (
                             <img
-                              src={event.thumbnail}
+                              src={wikiImage(event.thumbnail)}
                               alt={event.title}
                               className="h-full w-full object-cover"
                               onError={(e) => { e.currentTarget.style.display = "none"; }}
@@ -141,11 +140,11 @@ const Pane = ({
                         </div>
 
                         <div className="flex-grow min-w-0">
-                          <h3 className={`text-sm font-semibold line-clamp-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <h3 className={`text-sm font-semibold line-clamp-2 ${"text-parchment"}`}>
                             {event.title}
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-xs font-bold ${isDark ? "text-purple-400" : "text-purple-600"}`}>
+                            <span className={`text-xs font-bold ${"text-cinnabar"}`}>
                               {event.year ?? "—"}
                             </span>
                             <span

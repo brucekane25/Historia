@@ -48,16 +48,16 @@ const EventTimeline = ({
         className="glass-card p-2.5 cursor-pointer transition-all hover:scale-[1.02]"
         style={{
           background: isDark
-            ? "rgba(255,255,255,0.04)"
-            : "rgba(0,0,0,0.02)",
+            ? "color-mix(in srgb, var(--parchment) 4%, transparent)"
+            : "color-mix(in srgb, var(--parchment) 2%, transparent)",
           borderColor: isDark
-            ? "rgba(255,255,255,0.06)"
-            : "rgba(0,0,0,0.05)",
+            ? "color-mix(in srgb, var(--parchment) 6%, transparent)"
+            : "color-mix(in srgb, var(--parchment) 5%, transparent)",
         }}
       >
         <div className="flex items-center gap-2">
           <h3
-            className={`text-sm font-bold ${isDark ? "text-purple-400" : "text-purple-600"}`}
+            className={`text-sm font-bold ${"text-cinnabar"}`}
           >
             {event.year ?? "—"}
           </h3>
@@ -72,7 +72,7 @@ const EventTimeline = ({
           </span>
         </div>
         <p
-          className={`text-xs line-clamp-2 mt-0.5 ${isDark ? "text-white/70" : "text-gray-600"}`}
+          className={`text-xs line-clamp-2 mt-0.5 ${isDark ? "text-parchment/70" : "text-dim"}`}
         >
           {event.title}
         </p>
@@ -87,11 +87,11 @@ const EventTimeline = ({
 
         <div className="flex flex-col items-center relative">
           <div
-            className={`w-2.5 h-2.5 rounded-full z-10 ${isDark ? "bg-purple-500 shadow-sm shadow-purple-500/30" : "bg-purple-500"}`}
+            className={`w-2.5 h-2.5 rounded-full z-10 ${isDark ? "bg-cinnabar/12 shadow-sm shadow-cinnabar/30" : "bg-cinnabar/12"}`}
           />
           {index < sortedEvents.length - 1 && (
             <div
-              className={`w-px absolute top-3 bottom-0 ${isDark ? "bg-white/8" : "bg-gray-200"}`}
+              className={`w-px absolute top-3 bottom-0 ${isDark ? "bg-parchment/8" : "bg-muted"}`}
               style={{ height: "calc(100% - 8px)" }}
             />
           )}
@@ -109,7 +109,7 @@ const EventTimeline = ({
       {sortedEvents.length === 0 ? (
         <div
           className={`flex h-full items-center justify-center px-6 text-center text-xs ${
-            isDark ? "text-white/30" : "text-gray-400"
+            isDark ? "text-parchment/30" : "text-dim"
           }`}
         >
           No events in the current filter.

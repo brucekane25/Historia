@@ -28,17 +28,7 @@ export default function BottomAppBar({
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[1000]"
     >
-      <div
-        className={`flex items-center gap-1 px-3 py-2 rounded-2xl shadow-2xl ${isDark
-          ? "glass-dark shadow-purple-500/5"
-          : "glass shadow-black/10"
-          }`}
-        style={{
-          border: isDark
-            ? "1px solid rgba(255,255,255,0.06)"
-            : "1px solid rgba(0,0,0,0.06)",
-        }}
-      >
+      <div className="plate rounded-[3px] flex items-center gap-0.5 px-2 py-1.5">
         {/* Timeline */}
         <BottomBarBtn
           isDark={isDark}
@@ -46,7 +36,7 @@ export default function BottomAppBar({
           title="Timeline"
           active={leftOpen}
         >
-          <LineChart className="w-4 h-4" />
+          <LineChart className="w-4 h-4" strokeWidth={1.5} />
         </BottomBarBtn>
 
         {/* View Toggle */}
@@ -56,23 +46,28 @@ export default function BottomAppBar({
           title={viewMode === "map" ? "Globe View" : "Map View"}
         >
           {viewMode === "map" ? (
-            <Globe className="w-4 h-4" />
+            <Globe className="w-4 h-4" strokeWidth={1.5} />
           ) : (
-            <Map className="w-4 h-4" />
+            <Map className="w-4 h-4" strokeWidth={1.5} />
           )}
         </BottomBarBtn>
 
-        {/* Random Events - center hero button */}
+        <Divider />
+
+        {/* Random Events — the surveyor's seal, centre of the bar */}
         <button
           onClick={() => setIsSlider(!isSlider)}
-          className={`mx-1 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${isDark
-            ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 shadow-lg shadow-purple-500/10"
-            : "bg-purple-100 text-purple-600 hover:bg-purple-200 shadow-lg shadow-purple-500/10"
-            }`}
+          className={`mx-1 w-10 h-10 rounded-[2px] flex items-center justify-center transition-colors duration-200 ${
+            isSlider
+              ? "bg-cinnabar text-[color:var(--primary-foreground)]"
+              : "bg-cinnabar/12 text-cinnabar hover:bg-cinnabar/22"
+          }`}
           title="Random Events"
         >
-          <Dice5 className="w-5 h-5" />
+          <Dice5 className="w-5 h-5" strokeWidth={1.5} />
         </button>
+
+        <Divider />
 
         {/* Dark Mode */}
         <BottomBarBtn
@@ -81,9 +76,9 @@ export default function BottomAppBar({
           title={lightMode ? "Dark Mode" : "Light Mode"}
         >
           {lightMode ? (
-            <Moon className="w-4 h-4" />
+            <Moon className="w-4 h-4" strokeWidth={1.5} />
           ) : (
-            <Sun className="w-4 h-4" />
+            <Sun className="w-4 h-4" strokeWidth={1.5} />
           )}
         </BottomBarBtn>
 
@@ -94,7 +89,7 @@ export default function BottomAppBar({
           title="Bookmarks"
           active={bookmarksOpen}
         >
-          <Bookmark className="w-4 h-4" />
+          <Bookmark className="w-4 h-4" strokeWidth={1.5} />
         </BottomBarBtn>
 
         {/* Surprise Me */}
@@ -103,8 +98,10 @@ export default function BottomAppBar({
           onClick={onSurpriseMe}
           title="Surprise Me"
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-4 h-4" strokeWidth={1.5} />
         </BottomBarBtn>
+
+        <Divider />
 
         {/* Settings */}
         <BottomBarBtn
@@ -113,11 +110,15 @@ export default function BottomAppBar({
           title="Tweaks"
           active={settingsOpen}
         >
-          <Settings className="w-4 h-4" />
+          <Settings className="w-4 h-4" strokeWidth={1.5} />
         </BottomBarBtn>
       </div>
     </motion.div>
   );
+}
+
+function Divider() {
+  return <span className="mx-1 w-px h-6 bg-hairline" aria-hidden="true" />;
 }
 
 function BottomBarBtn({ isDark, onClick, title, active = false, children }) {
@@ -125,10 +126,12 @@ function BottomBarBtn({ isDark, onClick, title, active = false, children }) {
     <button
       onClick={onClick}
       title={title}
-      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${isDark
-        ? active ? "bg-white/10 text-white" : "text-white/60 hover:text-white hover:bg-white/10"
-        : active ? "bg-black/5 text-gray-900" : "text-gray-600 hover:text-gray-900 hover:bg-black/5"
-        }`}
+      aria-pressed={active}
+      className={`w-9 h-9 rounded-[2px] flex items-center justify-center transition-colors duration-200 ${
+        active
+          ? "bg-cinnabar/12 text-cinnabar"
+          : "text-dim hover:text-parchment hover:bg-parchment/6"
+      }`}
     >
       {children}
     </button>

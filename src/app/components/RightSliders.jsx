@@ -40,7 +40,7 @@ const RightSliders = ({
       {/* Events Per Page */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className={`text-xs ${isDark ? "text-white/50" : "text-gray-500"}`}>
+          <span className={`text-xs ${isDark ? "text-parchment/50" : "text-dim"}`}>
             Events per page
           </span>
           <Input
@@ -52,9 +52,9 @@ const RightSliders = ({
             min={1}
             max={10000}
             step={1}
-            className={`w-20 text-center text-sm font-mono rounded-lg border ${isDark
-              ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
-              : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
+            className={`w-20 text-center text-sm font-mono rounded-[3px] border ${isDark
+              ? "bg-parchment/5 border-hairline text-parchment focus:border-cinnabar/50"
+              : "bg-ink/5 border-hairline text-parchment focus:border-cinnabar/35"
               }`}
           />
         </div>
@@ -75,15 +75,15 @@ const RightSliders = ({
           size="sm"
           disabled={currentPage === 1 || isLoading}
           onClick={() => setCurrentPage((p) => p - 1)}
-          className={`rounded-lg ${isDark
-            ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
-            : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
+          className={`rounded-[3px] ${isDark
+            ? "border-hairline text-parchment/70 hover:bg-parchment/10 disabled:opacity-30"
+            : "border-hairline text-parchment hover:bg-ink/5 disabled:opacity-30"
             }`}
         >
           <ChevronLeft className="w-3.5 h-3.5 mr-1" />
           Prev
         </Button>
-        <span className={`text-xs font-mono ${isDark ? "text-white/60" : "text-gray-500"}`}>
+        <span className={`text-xs font-mono ${isDark ? "text-parchment/60" : "text-dim"}`}>
           {currentPage}/{pages}
         </span>
         <Button
@@ -91,9 +91,9 @@ const RightSliders = ({
           size="sm"
           disabled={currentPage === pages || isLoading}
           onClick={() => setCurrentPage((p) => p + 1)}
-          className={`rounded-lg ${isDark
-            ? "border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-30"
-            : "border-black/10 text-gray-700 hover:bg-black/5 disabled:opacity-30"
+          className={`rounded-[3px] ${isDark
+            ? "border-hairline text-parchment/70 hover:bg-parchment/10 disabled:opacity-30"
+            : "border-hairline text-parchment hover:bg-ink/5 disabled:opacity-30"
             }`}
         >
           Next
@@ -103,11 +103,11 @@ const RightSliders = ({
 
       {/* Stats */}
       <div className="flex items-center justify-between text-xs">
-        <span className={isDark ? "text-white/30" : "text-gray-400"}>
-          Total: <strong className={isDark ? "text-white/60" : "text-gray-600"}>{totalEvents?.toLocaleString()}</strong>
+        <span className={isDark ? "text-parchment/30" : "text-dim"}>
+          Total: <strong className={isDark ? "text-parchment/60" : "text-dim"}>{totalEvents?.toLocaleString()}</strong>
         </span>
-        <span className={`flex items-center gap-1 ${isDark ? "text-white/30" : "text-gray-400"}`}>
-          Showing: <strong className={isDark ? "text-purple-400" : "text-purple-600"}>{filterTotalEvents?.toLocaleString()}</strong>
+        <span className={`flex items-center gap-1 ${isDark ? "text-parchment/30" : "text-dim"}`}>
+          Showing: <strong className={"text-cinnabar"}>{filterTotalEvents?.toLocaleString()}</strong>
           {isLoading && <Loader2 className="w-3 h-3 animate-spin" aria-label="Loading" />}
         </span>
       </div>

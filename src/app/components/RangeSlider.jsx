@@ -49,10 +49,10 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
   return (
     <div className="w-full space-y-3">
       <div className="flex items-center justify-between text-xs">
-        <span className={isDark ? "text-white/40" : "text-gray-400"}>
+        <span className={isDark ? "text-parchment/40" : "text-dim"}>
           From
         </span>
-        <span className={isDark ? "text-white/40" : "text-gray-400"}>
+        <span className={isDark ? "text-parchment/40" : "text-dim"}>
           To
         </span>
       </div>
@@ -66,9 +66,9 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
           min={HISTORY_YEAR_MIN}
           max={HISTORY_YEAR_MAX}
           step={1}
-          className={`w-[90px] text-center text-sm font-mono rounded-lg border transition-colors ${isDark
-            ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"
-            : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
+          className={`w-[90px] text-center text-sm font-mono rounded-[3px] border transition-colors ${isDark
+            ? "bg-parchment/5 border-hairline text-parchment placeholder:text-parchment/30 focus:border-cinnabar/50"
+            : "bg-ink/5 border-hairline text-parchment focus:border-cinnabar/35"
             }`}
         />
         <div className="flex-1">
@@ -91,9 +91,9 @@ const RangeSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }) =
           min={HISTORY_YEAR_MIN}
           max={HISTORY_YEAR_MAX}
           step={1}
-          className={`w-[90px] text-center text-sm font-mono rounded-lg border transition-colors ${isDark
-            ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-purple-500/50"
-            : "bg-black/5 border-black/10 text-gray-900 focus:border-purple-500"
+          className={`w-[90px] text-center text-sm font-mono rounded-[3px] border transition-colors ${isDark
+            ? "bg-parchment/5 border-hairline text-parchment placeholder:text-parchment/30 focus:border-cinnabar/50"
+            : "bg-ink/5 border-hairline text-parchment focus:border-cinnabar/35"
             }`}
         />
       </div>

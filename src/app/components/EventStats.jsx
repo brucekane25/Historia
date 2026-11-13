@@ -97,28 +97,26 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     exit={{ opacity: 0, x: 20, scale: 0.95 }}
                     transition={{ duration: 0.3 }}
-                    className={`absolute right-4 top-20 z-[1030] rounded-2xl shadow-2xl p-4 w-[300px] max-h-[75vh] overflow-y-auto ${isDark ? "glass-dark" : "glass"
+                    className={`absolute right-4 top-20 z-[1030] rounded-[4px] shadow-2xl p-4 w-[300px] max-h-[75vh] overflow-y-auto ${isDark ? "glass-dark" : "glass"
                         }`}
                     style={{
-                        backgroundColor: isDark
-                            ? "rgba(15,17,30,0.92)"
-                            : "rgba(255,255,255,0.92)",
+                        backgroundColor: "var(--plate)",
                         backdropFilter: "blur(24px)",
                         border: isDark
-                            ? "1px solid rgba(6,182,212,0.2)"
-                            : "1px solid rgba(6,182,212,0.15)",
+                            ? "1px solid color-mix(in srgb, var(--verdigris) 20%, transparent)"
+                            : "1px solid color-mix(in srgb, var(--verdigris) 15%, transparent)",
                         boxShadow: isDark
-                            ? "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(6,182,212,0.1)"
-                            : "0 25px 50px -12px rgba(0,0,0,0.1), 0 0 30px rgba(6,182,212,0.08)",
-                        color: isDark ? "#e5e7eb" : "#111827",
+                            ? "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px color-mix(in srgb, var(--verdigris) 10%, transparent)"
+                            : "0 25px 50px -12px color-mix(in srgb, var(--parchment) 10%, transparent), 0 0 30px color-mix(in srgb, var(--verdigris) 8%, transparent)",
+                        color: "var(--parchment)",
                     }}
                 >
                         {/* Gradient border */}
-                        <div className="relative h-1 -mx-4 -mt-4 mb-4 rounded-t-2xl overflow-hidden">
+                        <div className="relative h-1 -mx-4 -mt-4 mb-4 rounded-t-[3px] overflow-hidden">
                             <div 
                                 className="absolute inset-0"
                                 style={{
-                                    background: "linear-gradient(90deg, #06b6d4, #8b5cf6, #06b6d4)",
+                                    background: "linear-gradient(90deg, var(--cinnabar) 0%, color-mix(in srgb, var(--brass) 55%, transparent) 55%, transparent 100%)",
                                     backgroundSize: '200% 100%',
                                     animation: 'shimmer 2s linear infinite',
                                 }}
@@ -132,7 +130,7 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                     >
                         <div className="flex items-center gap-2 pointer-events-none">
                             <BarChart3
-                                className={`w-4 h-4 ${isDark ? "text-cyan-400" : "text-cyan-600"
+                                className={`w-4 h-4 ${"text-verdigris"
                                     }`}
                             />
                             <h3 className="text-sm font-bold">Event Statistics</h3>
@@ -140,9 +138,9 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                         <button
                             onClick={onClose}
                             onPointerDown={(e) => e.stopPropagation()}
-                            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all hover:scale-105 ${isDark
-                                ? "text-white/40 hover:text-white hover:bg-white/10"
-                                : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
+                            className={`w-7 h-7 rounded-[3px] flex items-center justify-center transition-all hover:scale-105 ${isDark
+                                ? "text-parchment/40 hover:text-parchment hover:bg-parchment/10"
+                                : "text-dim hover:text-parchment hover:bg-ink/5"
                                 }`}
                         >
                             <X className="w-3.5 h-3.5" />
@@ -171,7 +169,7 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                     {/* Category Distribution */}
                     <div className="mb-4">
                         <p
-                            className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-white/40" : "text-gray-400"
+                            className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-parchment/40" : "text-dim"
                                 }`}
                         >
                             <BarChart3 className="w-3 h-3" /> CATEGORIES
@@ -180,16 +178,14 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                             {categoryData.map(([cat, count]) => (
                                 <div key={cat} className="flex items-center gap-2">
                                     <span
-                                        className={`text-[10px] w-16 truncate capitalize ${isDark ? "text-white/50" : "text-gray-500"
+                                        className={`text-[10px] w-16 truncate capitalize ${isDark ? "text-parchment/50" : "text-dim"
                                             }`}
                                     >
                                         {categoryLabel(cat)}
                                     </span>
                                     <div className="flex-1 h-4 rounded-full overflow-hidden relative"
                                         style={{
-                                            background: isDark
-                                                ? "rgba(255,255,255,0.05)"
-                                                : "rgba(0,0,0,0.05)",
+                                            background: "color-mix(in srgb, var(--parchment) 5%, transparent)",
                                         }}
                                     >
                                         <motion.div
@@ -201,12 +197,12 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                                             className="h-full rounded-full"
                                             style={{
                                                 backgroundColor:
-                                                    categoryColors[cat] || "#6b7280",
+                                                    categoryColors[cat] || "var(--parchment-dim)",
                                             }}
                                         />
                                     </div>
                                     <span
-                                        className={`text-[10px] font-mono w-8 text-right ${isDark ? "text-white/40" : "text-gray-400"
+                                        className={`text-[10px] font-mono w-8 text-right ${isDark ? "text-parchment/40" : "text-dim"
                                             }`}
                                     >
                                         {count}
@@ -219,7 +215,7 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                     {/* Timeline Sparkline */}
                     <div className="mb-4">
                         <p
-                            className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-white/40" : "text-gray-400"
+                            className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-parchment/40" : "text-dim"
                                 }`}
                         >
                             <TrendingUp className="w-3 h-3" /> TIMELINE
@@ -233,8 +229,8 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                                         height: `${(d.count / maxTimelineCount) * 100}%`,
                                         minHeight: "2px",
                                         backgroundColor: isDark
-                                            ? "rgba(139,92,246,0.5)"
-                                            : "rgba(139,92,246,0.6)",
+                                            ? "color-mix(in srgb, var(--cinnabar) 50%, transparent)"
+                                            : "color-mix(in srgb, var(--cinnabar) 60%, transparent)",
                                         opacity: 0.7,
                                     }}
                                     title={`${d.year}s: ${d.count} events`}
@@ -243,13 +239,13 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                         </div>
                         <div className="flex justify-between mt-1">
                             <span
-                                className={`text-[9px] ${isDark ? "text-white/30" : "text-gray-400"
+                                className={`text-[9px] ${isDark ? "text-parchment/30" : "text-dim"
                                     }`}
                             >
                                 {timelineData[0]?.year || ""}
                             </span>
                             <span
-                                className={`text-[9px] ${isDark ? "text-white/30" : "text-gray-400"
+                                className={`text-[9px] ${isDark ? "text-parchment/30" : "text-dim"
                                     }`}
                             >
                                 {timelineData[timelineData.length - 1]?.year || ""}
@@ -261,9 +257,9 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
                     <div>
                         <button
                             onClick={fetchGlobalStats}
-                            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all ${isDark
-                                ? "bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
-                                : "bg-purple-50 text-purple-600 hover:bg-purple-100"
+                            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-[3px] text-xs font-medium transition-all ${isDark
+                                ? "bg-cinnabar/10 text-cinnabar hover:bg-cinnabar/20"
+                                : "bg-cinnabar/12 text-cinnabar hover:bg-cinnabar/12"
                                 }`}
                         >
                             {loadingGlobal ? (
@@ -305,29 +301,29 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
 
                                         {/* Top Decades */}
                                         <div>
-                                            <p className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                            <p className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-parchment/40" : "text-dim"}`}>
                                                 <Calendar className="w-3 h-3" /> TOP DECADES
                                             </p>
                                             <div className="space-y-1">
                                                 {globalStats.topDecades.slice(0, 8).map((d) => (
                                                     <div key={d.decade} className="flex items-center gap-2">
-                                                        <span className={`text-[10px] w-12 font-mono ${isDark ? "text-white/50" : "text-gray-500"}`}>
+                                                        <span className={`text-[10px] w-12 font-mono ${isDark ? "text-parchment/50" : "text-dim"}`}>
                                                             {d.decade}s
                                                         </span>
                                                         <div className="flex-1 h-3 rounded-full overflow-hidden"
                                                             style={{
-                                                                background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                                                                background: "color-mix(in srgb, var(--parchment) 5%, transparent)",
                                                             }}
                                                         >
                                                             <div
                                                                 className="h-full rounded-full"
                                                                 style={{
                                                                     width: `${(d.count / globalStats.topDecades[0].count) * 100}%`,
-                                                                    backgroundColor: isDark ? "rgba(139,92,246,0.6)" : "rgba(139,92,246,0.7)",
+                                                                    backgroundColor: isDark ? "color-mix(in srgb, var(--cinnabar) 60%, transparent)" : "color-mix(in srgb, var(--cinnabar) 70%, transparent)",
                                                                 }}
                                                             />
                                                         </div>
-                                                        <span className={`text-[10px] font-mono w-8 text-right ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                                        <span className={`text-[10px] font-mono w-8 text-right ${isDark ? "text-parchment/40" : "text-dim"}`}>
                                                             {d.count}
                                                         </span>
                                                     </div>
@@ -337,29 +333,29 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
 
                                         {/* Global Category Breakdown */}
                                         <div>
-                                            <p className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                            <p className={`text-[10px] font-medium mb-2 flex items-center gap-1 ${isDark ? "text-parchment/40" : "text-dim"}`}>
                                                 <BarChart3 className="w-3 h-3" /> ALL CATEGORIES (DB)
                                             </p>
                                             <div className="space-y-1">
                                                 {globalStats.categories.map((c) => (
                                                     <div key={c.category} className="flex items-center gap-2">
-                                                        <span className={`text-[10px] w-16 truncate capitalize ${isDark ? "text-white/50" : "text-gray-500"}`}>
+                                                        <span className={`text-[10px] w-16 truncate capitalize ${isDark ? "text-parchment/50" : "text-dim"}`}>
                                                             {categoryLabel(c.category)}
                                                         </span>
                                                         <div className="flex-1 h-3 rounded-full overflow-hidden"
                                                             style={{
-                                                                background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                                                                background: "color-mix(in srgb, var(--parchment) 5%, transparent)",
                                                             }}
                                                         >
                                                             <div
                                                                 className="h-full rounded-full"
                                                                 style={{
                                                                     width: `${(c.count / globalStats.categories[0].count) * 100}%`,
-                                                                    backgroundColor: categoryColors[c.category] || "#6b7280",
+                                                                    backgroundColor: categoryColors[c.category] || "var(--parchment-dim)",
                                                                 }}
                                                             />
                                                         </div>
-                                                        <span className={`text-[10px] font-mono w-10 text-right ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                                                        <span className={`text-[10px] font-mono w-10 text-right ${isDark ? "text-parchment/40" : "text-dim"}`}>
                                                             {c.count}
                                                         </span>
                                                     </div>
@@ -380,22 +376,20 @@ const EventStats = ({ events, isOpen, onClose, lightMode }) => {
 function StatCard({ isDark, label, value }) {
     return (
         <div
-            className={`p-2 rounded-lg text-center ${isDark ? "bg-white/[0.03]" : "bg-black/[0.02]"
+            className={`p-2 rounded-[3px] text-center ${isDark ? "bg-plate/[0.03]" : "bg-ink/[0.02]"
                 }`}
             style={{
-                border: isDark
-                    ? "1px solid rgba(255,255,255,0.04)"
-                    : "1px solid rgba(0,0,0,0.04)",
+                border: "1px solid color-mix(in srgb, var(--parchment) 4%, transparent)",
             }}
         >
             <p
-                className={`text-sm font-bold ${isDark ? "text-purple-400" : "text-purple-600"
+                className={`text-sm font-bold ${"text-cinnabar"
                     }`}
             >
                 {value}
             </p>
             <p
-                className={`text-[9px] ${isDark ? "text-white/30" : "text-gray-400"
+                className={`text-[9px] ${isDark ? "text-parchment/30" : "text-dim"
                     }`}
             >
                 {label}

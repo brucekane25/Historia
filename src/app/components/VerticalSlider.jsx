@@ -43,17 +43,15 @@ const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }
 
   return (
     <div
-      className={`px-2 py-3 rounded-xl shadow-xl ${isDark ? "glass-dark" : "glass"
+      className={`px-2 py-3 rounded-[3px] shadow-xl ${isDark ? "glass-dark" : "glass"
         }`}
       style={{
-        border: isDark
-          ? "1px solid rgba(255,255,255,0.06)"
-          : "1px solid rgba(0,0,0,0.06)",
+        border: "1px solid color-mix(in srgb, var(--parchment) 6%, transparent)",
       }}
     >
       <div className="flex flex-row space-x-2 items-center justify-center">
         <div className="flex flex-col items-center h-[56vh] w-full">
-          <p className={`text-[10px] mb-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+          <p className={`text-[10px] mb-1 ${isDark ? "text-parchment/40" : "text-dim"}`}>
             End
           </p>
           <Input
@@ -64,9 +62,9 @@ const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }
             min={-1458}
             max={2024}
             step={1}
-            className={`w-16 text-center text-xs font-mono mb-2 rounded-lg border ${isDark
-              ? "bg-white/5 border-white/10 text-white"
-              : "bg-black/5 border-black/10 text-gray-900"
+            className={`w-16 text-center text-xs font-mono mb-2 rounded-[3px] border ${isDark
+              ? "bg-parchment/5 border-hairline text-parchment"
+              : "bg-ink/5 border-hairline text-parchment"
               }`}
           />
           <Slider
@@ -87,12 +85,12 @@ const VerticalSlider = ({ setSelectedEvent, yearRange, setYearRange, lightMode }
             min={-1458}
             max={2024}
             step={1}
-            className={`w-16 text-center text-xs font-mono mt-2 rounded-lg border ${isDark
-              ? "bg-white/5 border-white/10 text-white"
-              : "bg-black/5 border-black/10 text-gray-900"
+            className={`w-16 text-center text-xs font-mono mt-2 rounded-[3px] border ${isDark
+              ? "bg-parchment/5 border-hairline text-parchment"
+              : "bg-ink/5 border-hairline text-parchment"
               }`}
           />
-          <p className={`text-[10px] mt-1 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+          <p className={`text-[10px] mt-1 ${isDark ? "text-parchment/40" : "text-dim"}`}>
             Start
           </p>
         </div>

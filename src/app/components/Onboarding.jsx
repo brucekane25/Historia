@@ -12,31 +12,31 @@ import { Globe, Map, Compass, Sparkles, ArrowRight, BarChart3 } from "lucide-rea
 
 const steps = [
   {
-    icon: <Globe className="w-8 h-8 text-purple-400" />,
+    icon: <Globe className="w-8 h-8 text-cinnabar" />,
     title: "Welcome to Gloria",
     description:
       "Explore thousands of historical events across every era, region, and category — on an interactive map or 3D globe.",
   },
   {
-    icon: <Map className="w-8 h-8 text-purple-400" />,
+    icon: <Map className="w-8 h-8 text-cinnabar" />,
     title: "Map & Globe Views",
     description:
       "Switch between a fast clustered map and a live 3D globe. The globe renders events as glowing points, with an optional density heatmap and animated connection arcs.",
   },
   {
-    icon: <BarChart3 className="w-8 h-8 text-purple-400" />,
+    icon: <BarChart3 className="w-8 h-8 text-cinnabar" />,
     title: "Explore the Live Globe",
     description:
       "Hover a point to preview an event, click to open it, and focus the camera on any selection. Use the Density, Arcs, Glow, and Pins controls to shape the view.",
   },
   {
-    icon: <Compass className="w-8 h-8 text-purple-400" />,
+    icon: <Compass className="w-8 h-8 text-cinnabar" />,
     title: "Filter & Search",
     description:
       "Use the Tweaks panel to filter by year range, categories, and page size. Search the full archive from the navbar or command palette, or hit Surprise Me for a random event.",
   },
   {
-    icon: <Sparkles className="w-8 h-8 text-purple-400" />,
+    icon: <Sparkles className="w-8 h-8 text-cinnabar" />,
     title: "Ready to Explore!",
     description:
       "Save events with bookmarks, share links, open the stats panel, and switch themes. Press Ctrl/⌘ K anytime to jump anywhere.",
@@ -82,21 +82,21 @@ const Onboarding = ({ forceOpen, onClose, lightMode = false }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className={`sm:max-w-[440px] z-[1040] border ${isDark ? "bg-[#0f1120] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>
+      <DialogContent className={`sm:max-w-[440px] z-[1040] border ${isDark ? "bg-[var(--plate)] border-hairline text-parchment" : "bg-plate border-hairline text-parchment"}`}>
         <DialogHeader>
           <div className="flex flex-col items-center text-center pt-4">
             <div className="relative mb-4">
               {currentStep.icon}
-              <div className="absolute inset-0 blur-xl bg-purple-500/20 rounded-full" />
+              <div className="absolute inset-0 blur-xl bg-cinnabar/20 rounded-full" />
             </div>
-            <DialogTitle className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <DialogTitle className={`text-xl font-bold ${"text-parchment"}`}>
               {currentStep.title}
             </DialogTitle>
           </div>
         </DialogHeader>
 
         <div className="text-center px-4 pb-2">
-          <p className={`text-sm leading-relaxed ${isDark ? "text-white/60" : "text-gray-500"}`}>
+          <p className={`text-sm leading-relaxed ${isDark ? "text-parchment/60" : "text-dim"}`}>
             {currentStep.description}
           </p>
         </div>
@@ -107,10 +107,10 @@ const Onboarding = ({ forceOpen, onClose, lightMode = false }) => {
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${i === step
-                ? "w-6 bg-purple-500"
+                ? "w-6 bg-cinnabar/12"
                 : i < step
-                  ? "w-1.5 bg-purple-500/40"
-                  : `w-1.5 ${isDark ? "bg-white/10" : "bg-black/10"}`
+                  ? "w-1.5 bg-cinnabar/40"
+                  : `w-1.5 ${isDark ? "bg-parchment/10" : "bg-ink/10"}`
                 }`}
             />
           ))}
@@ -122,13 +122,13 @@ const Onboarding = ({ forceOpen, onClose, lightMode = false }) => {
               <Button
                 variant="ghost"
                 onClick={handleClose}
-                className={`${isDark ? "text-white/40 hover:text-white hover:bg-white/5" : "text-gray-400 hover:text-gray-900 hover:bg-black/5"}`}
+                className={`${isDark ? "text-parchment/40 hover:text-parchment hover:bg-parchment/5" : "text-dim hover:text-parchment hover:bg-ink/5"}`}
               >
                 Skip
               </Button>
               <Button
                 onClick={handleNext}
-                className="bg-purple-600 hover:bg-purple-500 text-white gap-1"
+                className="bg-cinnabar/12 hover:bg-cinnabar/12 text-parchment gap-1"
               >
                 Next <ArrowRight className="w-3.5 h-3.5" />
               </Button>
@@ -136,7 +136,7 @@ const Onboarding = ({ forceOpen, onClose, lightMode = false }) => {
           ) : (
             <Button
               onClick={handleClose}
-              className="bg-purple-600 hover:bg-purple-500 text-white px-8"
+              className="bg-cinnabar/12 hover:bg-cinnabar/12 text-parchment px-8"
             >
               Let&apos;s Explore!
             </Button>

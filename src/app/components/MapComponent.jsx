@@ -78,7 +78,7 @@ function getMarkerIcon(category, selected = false) {
 function createClusterIcon(cluster, isDark) {
   const count = cluster.getChildCount();
   const size = count > 500 ? 54 : count > 100 ? 46 : count > 10 ? 38 : 30;
-  const color = isDark ? "#22d3ee" : "#6366f1";
+  const color = isDark ? "#c9a44c" : "#8a6d25";
 
   return L.divIcon({
     className: "gloria-cluster-wrapper",
@@ -155,7 +155,7 @@ const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
           [90, 280],
         ]}
         maxBoundsViscosity={1}
-        style={{ height: "100%", width: "100%", background: isDark ? "#070b16" : "#eef2f7" }}
+        style={{ height: "100%", width: "100%", background: isDark ? "#0d1110" : "#efe9da" }}
       >
         <LayersControl position="topright" key={isDark ? "dark" : "light"}>
           <LayersControl.BaseLayer checked={isDark} name="Dark canvas">
@@ -207,7 +207,7 @@ const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
         <GeoJSON
           data={india_outline}
           style={{
-            color: isDark ? "#94a3b8" : "#334155",
+            color: "var(--parchment-dim)",
             weight: 0.6,
             opacity: 0.6,
             fillOpacity: 0,
@@ -276,29 +276,27 @@ const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
       {/* Map HUD */}
       <div className="pointer-events-none absolute bottom-24 left-4 z-[500] hidden sm:block">
         <div
-          className={`pointer-events-auto rounded-2xl px-3.5 py-2.5 backdrop-blur-xl ${
+          className={`pointer-events-auto rounded-[4px] px-3.5 py-2.5 backdrop-blur-xl ${
             isDark ? "glass-dark" : "glass"
           }`}
           style={{
             border: isDark
-              ? "1px solid rgba(34,211,238,0.18)"
-              : "1px solid rgba(15,23,42,0.08)",
-            background: isDark
-              ? "rgba(9,13,26,0.78)"
-              : "rgba(255,255,255,0.82)",
+              ? "1px solid color-mix(in srgb, var(--verdigris) 18%, transparent)"
+              : "1px solid var(--hairline)",
+            background: "var(--plate)",
             boxShadow: isDark
               ? "0 10px 34px rgba(0,0,0,0.32)"
-              : "0 10px 30px rgba(15,23,42,0.08)",
+              : "0 10px 30px var(--hairline)",
           }}
         >
           <div className="flex items-center gap-2">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-verdigris/12 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-verdigris/12" />
             </span>
             <span
               className={`text-[9px] font-bold tracking-[0.22em] ${
-                isDark ? "text-cyan-200/80" : "text-cyan-700"
+                isDark ? "text-verdigris/80" : "text-verdigris"
               }`}
             >
               LIVE MAP
@@ -307,19 +305,19 @@ const MapComponent = ({ events, selectedEvent, lightMode, onEventSelect }) => {
           <div className="mt-1.5 flex items-baseline gap-1.5">
             <span
               className={`text-xl font-semibold tabular-nums leading-none ${
-                isDark ? "text-white" : "text-gray-900"
+                "text-parchment"
               }`}
             >
               {(events?.length || 0).toLocaleString()}
             </span>
             <span
-              className={`text-[10px] ${isDark ? "text-white/45" : "text-gray-500"}`}
+              className={`text-[10px] ${isDark ? "text-parchment/45" : "text-dim"}`}
             >
               events plotted
             </span>
           </div>
           <p
-            className={`mt-1 text-[9px] ${isDark ? "text-white/30" : "text-gray-400"}`}
+            className={`mt-1 text-[9px] ${isDark ? "text-parchment/30" : "text-dim"}`}
           >
             No API key required
           </p>

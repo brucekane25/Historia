@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Globe, Map, Menu, Search, X, Github } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { wikiImage } from "@/lib/wiki-image";
 
 function titleRelevance(title, query) {
   const text = (title || "").toLowerCase();
@@ -27,7 +28,6 @@ const Navbart = ({
   onViewChange,
   events,
 }) => {
-  const isDark = !lightMode;
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [remoteResults, setRemoteResults] = useState([]);
@@ -122,51 +122,28 @@ const Navbart = ({
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-[1000] w-[95%] max-w-[900px]"
+      className="fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-[96%] max-w-[980px]"
     >
-      <div
-        className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-2xl ${isDark
-          ? "glass-dark shadow-purple-500/5"
-          : "glass shadow-black/10"
-          }`}
-        style={{
-          border: isDark
-            ? "1px solid rgba(255,255,255,0.06)"
-            : "1px solid rgba(0,0,0,0.06)",
-        }}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div
-            className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark
-              ? "bg-purple-500/20 text-purple-300"
-              : "bg-purple-100 text-purple-600"
-              }`}
-          >
-            <Globe className="w-4 h-4" />
+      <div className="plate rounded-[3px] flex items-stretch overflow-visible">
+        {/* Masthead: the wordmark sits behind a hairline, like a printed header. */}
+        <div className="flex items-center gap-2.5 pl-4 pr-4 border-r border-hairline flex-shrink-0">
+          <Globe className="w-4 h-4 text-cinnabar" strokeWidth={1.5} />
+          <div className="leading-none hidden sm:block">
+            <span className="font-display text-[15px] font-semibold uppercase tracking-[0.18em] text-parchment">
+              Gloria
+            </span>
+            <span className="hidden sm:block eyebrow text-dim mt-1.5">
+              An Atlas of History
+            </span>
           </div>
-          <span
-            className={`font-bold text-sm hidden sm:block ${isDark ? "text-white" : "text-gray-900"
-              }`}
-          >
-            Gloria
-          </span>
-          <span
-            className={`text-[9px] px-1.5 py-0.5 rounded-full hidden sm:block ${isDark
-              ? "bg-white/5 text-white/30"
-              : "bg-black/5 text-gray-400"
-              }`}
-          >
-            v3
-          </span>
         </div>
 
         {/* Search */}
-        <div className="flex-1 relative" ref={searchRef}>
-          <div className="relative">
+        <div className="flex-1 relative flex items-center px-3 min-w-0" ref={searchRef}>
+          <div className="relative flex items-center w-full">
             <Search
-              className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${isDark ? "text-white/30" : "text-gray-400"
-                }`}
+              className="absolute left-0 w-3.5 h-3.5 pointer-events-none text-dim"
+              strokeWidth={1.5}
             />
             <input
               type="text"
@@ -185,22 +162,23 @@ const Navbart = ({
                   setShowResults(false);
                 }
               }}
-              className={`w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border-0 outline-none transition-colors ${isDark
-                ? "bg-white/5 text-white placeholder:text-white/25 focus:bg-white/10"
-                : "bg-black/5 text-gray-900 placeholder:text-gray-400 focus:bg-black/8"
-                }`}
+              className="w-full pl-6 pr-12 py-2.5 text-[13px] bg-transparent text-parchment placeholder:text-dim/70 outline-none focus:placeholder:text-dim/40 transition-colors"
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
                 onClick={() => {
                   setSearchQuery("");
                   setShowResults(false);
                 }}
-                className={`absolute right-2 top-1/2 -translate-y-1/2 ${isDark ? "text-white/30 hover:text-white" : "text-gray-400 hover:text-gray-900"
-                  }`}
+                className="absolute right-0 text-dim hover:text-cinnabar transition-colors"
+                aria-label="Clear search"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" strokeWidth={1.5} />
               </button>
+            ) : (
+              <span className="absolute right-0 eyebrow text-dim/50 hidden md:block">
+                Ctrl K
+              </span>
             )}
           </div>
 
@@ -212,67 +190,46 @@ const Navbart = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full mt-2 left-0 right-0 rounded-xl shadow-2xl overflow-hidden z-[1050]"
-                style={{
-                  background: isDark
-                    ? "rgba(15,17,30,0.97)"
-                    : "rgba(255,255,255,0.97)",
-                  backdropFilter: "blur(20px)",
-                  border: isDark
-                    ? "1px solid rgba(255,255,255,0.08)"
-                    : "1px solid rgba(0,0,0,0.06)",
-                }}
+                className="absolute top-full mt-2 left-0 right-0 rounded-[3px] overflow-hidden z-[1050] plate-strong"
               >
                 {searchResults.length === 0 ? (
-                  <div
-                    className={`px-4 py-5 text-center text-xs ${
-                      isDark ? "text-white/35" : "text-gray-400"
-                    }`}
-                  >
-                    {isSearching ? "Searching…" : "No events found."}
+                  <div className="px-4 py-5 text-center">
+                    <p className="eyebrow text-dim">
+                      {isSearching ? "Searching the archive…" : "No entries found"}
+                    </p>
                   </div>
                 ) : (
-                  <div className="max-h-[300px] overflow-y-auto py-1">
-                  {searchResults.map((event) => (
-                    <button
-                      key={event._id}
-                      onClick={() => handleResultClick(event)}
-                      className={`w-full text-left px-3 py-2 flex items-center gap-2.5 transition-colors ${isDark
-                        ? "hover:bg-white/5"
-                        : "hover:bg-black/3"
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {searchResults.map((event, index) => (
+                      <button
+                        key={event._id}
+                        onClick={() => handleResultClick(event)}
+                        className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors hover:bg-parchment/5 ${
+                          index > 0 ? "border-t border-hairline" : ""
                         }`}
-                    >
-                      {event.thumbnail && (
-                        <img
-                          src={event.thumbnail}
-                          alt=""
-                          className="w-8 h-8 rounded object-cover flex-shrink-0"
-                        />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`text-xs font-medium truncate ${isDark ? "text-white" : "text-gray-900"
-                            }`}
-                        >
-                          {event.title}
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className={`text-[10px] font-mono ${isDark ? "text-purple-400" : "text-purple-600"
-                              }`}
-                          >
-                            {event.year ?? "—"}
-                          </span>
-                          <span
-                            className={`text-[9px] ${isDark ? "text-white/30" : "text-gray-400"
-                              }`}
-                          >
-                            {event.category}
-                          </span>
+                      >
+                        {event.thumbnail && (
+                          <img
+                            src={wikiImage(event.thumbnail)}
+                            alt=""
+                            className="w-9 h-9 object-cover flex-shrink-0 border border-hairline"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium truncate text-parchment">
+                            {event.title}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] font-mono tabular text-cinnabar">
+                              {event.year ?? "—"}
+                            </span>
+                            <span className="eyebrow text-dim/70">
+                              {event.category}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
                   </div>
                 )}
               </motion.div>
@@ -280,37 +237,33 @@ const Navbart = ({
           </AnimatePresence>
         </div>
 
-        {/* View Toggle */}
-        <button
-          onClick={() => onViewChange(viewMode === "map" ? "globe" : "map")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isDark
-            ? "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-            : "bg-black/5 text-gray-600 hover:bg-black/10 hover:text-gray-900"
-            }`}
-        >
-          {viewMode === "map" ? (
-            <>
-              <Globe className="w-3.5 h-3.5" /> Globe
-            </>
-          ) : (
-            <>
-              <Map className="w-3.5 h-3.5" /> Map
-            </>
-          )}
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-2 pl-3 pr-3 border-l border-hairline flex-shrink-0">
+          <button
+            onClick={() => onViewChange(viewMode === "map" ? "globe" : "map")}
+            className="flex items-center gap-1.5 rounded-[2px] border border-hairline px-3 py-1.5 eyebrow text-dim hover:text-parchment hover:border-hairline-strong transition-colors"
+          >
+            {viewMode === "map" ? (
+              <>
+                <Globe className="w-3.5 h-3.5" strokeWidth={1.5} /> Globe
+              </>
+            ) : (
+              <>
+                <Map className="w-3.5 h-3.5" strokeWidth={1.5} /> Map
+              </>
+            )}
+          </button>
 
-        {/* GitHub */}
-        <a
-          href="https://github.com/brucekane25/Historia"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isDark
-            ? "text-white/40 hover:text-white hover:bg-white/10"
-            : "text-gray-400 hover:text-gray-900 hover:bg-black/5"
-            }`}
-        >
-          <Github className="w-4 h-4" />
-        </a>
+          <a
+            href="https://github.com/brucekane25/Historia"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Source"
+            className="w-8 h-8 rounded-[2px] flex items-center justify-center text-dim hover:text-cinnabar transition-colors"
+          >
+            <Github className="w-4 h-4" strokeWidth={1.5} />
+          </a>
+        </div>
       </div>
     </motion.nav>
   );

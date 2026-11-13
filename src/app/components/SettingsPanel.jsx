@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import RangeSlider from "./RangeSlider";
 import RightSliders from "./RightSliders";
 import CategoryDropdown from "./CategoryDropdown";
-import { X, Filter, Sliders, BarChart3, HelpCircle, Sparkles, RotateCcw } from "lucide-react";
+import { X, Filter, Sliders, BarChart3, HelpCircle, RotateCcw } from "lucide-react";
 import { FULL_YEAR_RANGE } from "@/lib/history-range";
 
 import { motion, useDragControls } from "framer-motion";
@@ -45,30 +45,28 @@ export default function SettingsPanel({
       dragControls={controls}
       dragMomentum={false}
       whileDrag={{ scale: 1.02 }}
-      className={`rounded-2xl shadow-2xl w-full ${isDesktop ? "p-5" : "p-4"
+      className={`rounded-[4px] shadow-2xl w-full ${isDesktop ? "p-5" : "p-4"
         }`}
       style={{
-        backgroundColor: isDark
-          ? "rgba(15,17,30,0.95)"
-          : "rgba(255,255,255,0.95)",
+        backgroundColor: "var(--plate)",
         backdropFilter: "blur(24px)",
-        color: isDark ? "#e5e7eb" : "#111827",
+        color: "var(--parchment)",
         border: isDark
-          ? "1px solid rgba(139,92,246,0.2)"
-          : "1px solid rgba(139,92,246,0.15)",
+          ? "1px solid color-mix(in srgb, var(--cinnabar) 20%, transparent)"
+          : "1px solid color-mix(in srgb, var(--cinnabar) 15%, transparent)",
         boxShadow: isDark
-          ? "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.1)"
-          : "0 25px 50px -12px rgba(0,0,0,0.15), 0 0 30px rgba(139,92,246,0.1)",
+          ? "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px color-mix(in srgb, var(--cinnabar) 10%, transparent)"
+          : "0 25px 50px -12px color-mix(in srgb, var(--parchment) 15%, transparent), 0 0 30px color-mix(in srgb, var(--cinnabar) 10%, transparent)",
         maxHeight: "calc(100vh - 180px)",
         overflow: "auto",
       }}
     >
       {/* Gradient border top */}
-      <div className="relative h-1 -mx-5 -mt-5 mb-4 rounded-t-2xl overflow-hidden">
+      <div className="relative h-1 -mx-5 -mt-5 mb-4 rounded-t-[3px] overflow-hidden">
         <div 
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(90deg, #8b5cf6, #06b6d4, #8b5cf6)",
+            background: "linear-gradient(90deg, var(--cinnabar) 0%, color-mix(in srgb, var(--brass) 55%, transparent) 55%, transparent 100%)",
             backgroundSize: '200% 100%',
             animation: 'shimmer 2s linear infinite',
           }}
@@ -81,21 +79,15 @@ export default function SettingsPanel({
         onPointerDown={(e) => controls.start(e)}
       >
         <div className="flex items-center gap-2.5 pointer-events-none">
-          <div className="relative">
-            <Sliders
-              className={`w-5 h-5 ${isDark ? "text-purple-400" : "text-purple-600"
-                }`}
-            />
-            <Sparkles className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${isDark ? "text-cyan-400" : "text-cyan-500"} animate-pulse`} />
-          </div>
-          <h2 className="text-lg font-bold">Tweaks</h2>
+          <Sliders className="w-5 h-5 text-cinnabar" />
+          <h2 className="display text-lg font-medium">Tweaks</h2>
         </div>
         <div className="flex items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
           <button
             onClick={handleClearFilters}
-            className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl font-medium transition-all hover:scale-105 ${isDark
-              ? "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20"
-              : "bg-cyan-50 text-cyan-600 hover:bg-cyan-100"
+            className={`flex items-center gap-1.5 text-[11px] px-3 py-2 rounded-[3px] eyebrow transition-all hover:scale-105 border ${isDark
+              ? "border-hairline text-parchment/65 hover:text-parchment hover:bg-parchment/5"
+              : "border-hairline text-parchment/70 hover:bg-ink/5"
               }`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -103,9 +95,9 @@ export default function SettingsPanel({
           </button>
           <button
             onClick={() => setSettingsOpen(false)}
-            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all hover:scale-110 hover:bg-white/10 ${isDark
-              ? "text-white/40 hover:text-white"
-              : "text-gray-400 hover:text-gray-900"
+            className={`w-8 h-8 rounded-[3px] flex items-center justify-center transition-all hover:scale-110 hover:bg-parchment/10 ${isDark
+              ? "text-parchment/40 hover:text-parchment"
+              : "text-dim hover:text-parchment"
               }`}
           >
             <X className="w-4 h-4" />
@@ -120,7 +112,7 @@ export default function SettingsPanel({
           icon={<Filter className="w-4 h-4" />}
           label="Categories"
           isDark={isDark}
-          color="#8b5cf6"
+          color="#d9553a"
         >
           <CategoryDropdown
             lightMode={lightMode}
@@ -129,7 +121,7 @@ export default function SettingsPanel({
           />
           <p
             className={`mt-2 text-[10px] leading-relaxed ${
-              isDark ? "text-white/30" : "text-gray-400"
+              isDark ? "text-parchment/30" : "text-dim"
             }`}
           >
             Curated, Holidays, Births and Deaths search the whole archive. Topic and
@@ -142,7 +134,7 @@ export default function SettingsPanel({
           icon={<BarChart3 className="w-4 h-4" />}
           label="Year Range"
           isDark={isDark}
-          color="#06b6d4"
+          color="#4f9c8a"
         >
           <RangeSlider
             setSelectedEvent={setSelectedEvent}
@@ -157,7 +149,7 @@ export default function SettingsPanel({
           icon={<Sliders className="w-4 h-4" />}
           label="Data"
           isDark={isDark}
-          color="#10b981"
+          color="#4f9c8a"
         >
           <RightSliders
             setLimit={setLimit}
@@ -177,9 +169,9 @@ export default function SettingsPanel({
           <Button
             variant="ghost"
             onClick={onShowTutorial}
-            className={`w-full justify-start gap-2.5 h-11 text-sm font-medium rounded-xl transition-all hover:scale-[1.02] ${isDark
-              ? "text-white/50 hover:text-white hover:bg-white/5"
-              : "text-gray-500 hover:text-gray-900 hover:bg-black/5"
+            className={`w-full justify-start gap-2.5 h-11 text-sm font-medium rounded-[3px] transition-all hover:scale-[1.02] ${isDark
+              ? "text-parchment/50 hover:text-parchment hover:bg-parchment/5"
+              : "text-dim hover:text-parchment hover:bg-ink/5"
               }`}
           >
             <HelpCircle className="w-4 h-4" />
@@ -194,17 +186,15 @@ export default function SettingsPanel({
 function SettingsSection({ icon, label, isDark, color, children }) {
   return (
     <div
-      className={`rounded-xl p-4 transition-all ${isDark ? "bg-white/[0.03] hover:bg-white/[0.05]" : "bg-black/[0.02] hover:bg-black/[0.04]"
+      className={`rounded-[3px] p-4 transition-all ${isDark ? "bg-plate/[0.03] hover:bg-plate/[0.05]" : "bg-ink/[0.02] hover:bg-ink/[0.04]"
         }`}
       style={{
-        border: isDark
-          ? "1px solid rgba(255,255,255,0.05)"
-          : "1px solid rgba(0,0,0,0.05)",
+        border: "1px solid color-mix(in srgb, var(--parchment) 5%, transparent)",
       }}
     >
       <div className="flex items-center gap-2.5 mb-3">
         <div 
-          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          className="w-8 h-8 rounded-[3px] flex items-center justify-center"
           style={{ 
             backgroundColor: `${color}20`,
             color: color 
@@ -212,10 +202,7 @@ function SettingsSection({ icon, label, isDark, color, children }) {
         >
           {icon}
         </div>
-        <span
-          className={`text-sm font-semibold ${isDark ? "text-white/80" : "text-gray-700"
-            }`}
-        >
+        <span className="display text-[15px] font-medium tracking-tight">
           {label}
         </span>
       </div>
